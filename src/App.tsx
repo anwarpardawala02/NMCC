@@ -1,35 +1,27 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
+import { Box, Flex, Link, Button } from "@chakra-ui/react";
+import { Routes, Route, Link as RouterLink } from "react-router-dom";
+import Home from "./pages/Home";
+import Register from "./pages/Register";
 
-function App() {
-  const [count, setCount] = useState(0)
-
+export default function App() {
   return (
-    <>
-      <div>
-        <a href="https://vite.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.tsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-    </>
-  )
-}
+    <Box>
+      {/* Navbar */}
+      <Flex as="nav" p={4} bg="teal.500" color="white" justify="space-between">
+        <Flex gap={4}>
+          <Link as={RouterLink} to="/">Home</Link>
+          <Link as={RouterLink} to="/register">Register</Link>
+        </Flex>
+        <Button size="sm" colorScheme="teal" variant="outline">Login</Button>
+      </Flex>
 
-export default App
+      {/* Routes */}
+      <Box p={6}>
+        <Routes>
+          <Route path="/" element={<Home />} />
+          <Route path="/register" element={<Register />} />
+        </Routes>
+      </Box>
+    </Box>
+  );
+}
