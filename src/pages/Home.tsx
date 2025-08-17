@@ -1,19 +1,26 @@
-import { Box, Heading, Text, Image, SimpleGrid } from "@chakra-ui/react";
+import { useEffect, useState } from "react";
+import { Box, Heading, SimpleGrid, Image } from "@chakra-ui/react";
+import { supabase } from "../lib/supabaseClient";
 
 export default function Home() {
-  // TODO: Fetch photos from Supabase
+  const [photos, setPhotos] = useState<{ id: string; url: string; title?: string }[]>([]);
+
+  useEffect(() => {
+    async function fetchPhotos() {
+      const { data, error } = await supabase.from("photos").select("*").order("uploaded_at", { ascending: false });
+      if (error) console.error(error);
+      else setPhotos(data);
+    }
+    fetchPhotos();
+  }, []);
+
   return (
     <Box p={6}>
-      <Heading mb={4}>Northolt Manor Cricket Club</Heading>
-      <Text mb={6}>
-        Welcome to our Dawoodi Bohra community-affiliated cricket club. 
-        Here we celebrate our history and showcase memorable moments.
-      </Text>
-
-      <Heading size="md" mb={4}>Photo Gallery</Heading>
+      <Heading mb={4}>Club Photo Gallery</Heading>
       <SimpleGrid columns={[1, 2, 3]} spacing={4}>
-        <Image src="https://via.placeholder.com/200" alt="club photo" />
-        <Image src="https://via.placeholder.com/200" alt="club photo" />
+        {photos.map((p) => (
+          <Image key={p.id} src={p.url} alt={p.title} borderRadius="md" />
+        ))}
       </SimpleGrid>
     </Box>
   );
