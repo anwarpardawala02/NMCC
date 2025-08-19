@@ -1,26 +1,5 @@
 import { useState, useEffect } from 'react';
-import { 
-  VStack, 
-  HStack,
-  FormControl, 
-  FormLabel, 
-  Input, 
-  Textarea,
-  Button,
-  useToast,
-  Box,
-  Heading,
-  IconButton,
-  Table,
-  Thead,
-  Tbody,
-  Tr,
-  Th,
-  Td,
-  Badge,
-  Progress,
-  Text
-} from '@chakra-ui/react';
+import { VStack, HStack, FormControl, FormLabel, Input, Textarea, Button, useToast, Box, Heading, IconButton, Badge, Progress, Text } from '@chakra-ui/react';
 import { Plus, Minus } from 'lucide-react';
 import { createPoll, listPolls } from '../lib/db';
 import type { Poll } from '../lib/db';

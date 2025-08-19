@@ -1,16 +1,6 @@
 import { useEffect, useState } from "react";
 import { useParams, Link as RouterLink } from "react-router-dom";
-import { 
-  Box, 
-  Heading, 
-  Text,
-  Image,
-  Container,
-  Badge,
-  Button,
-  VStack,
-  Spinner
-} from "@chakra-ui/react";
+import { Box, Heading, Image, Container, Badge, Button, VStack, Spinner } from "@chakra-ui/react";
 import { ArrowLeft } from "lucide-react";
 import { getBlog } from "../lib/db";
 import type { Blog } from "../lib/db";

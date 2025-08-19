@@ -13,18 +13,15 @@ import {
   Alert,
   AlertIcon
 } from "@chakra-ui/react";
-import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../hooks/useAuth";
 
 export default function Login() {
   const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
   const { signIn } = useAuth();
-  const navigate = useNavigate();
-  const location = useLocation();
   const toast = useToast();
 
-  const from = location.state?.from?.pathname || "/";
+  // const from = location.state?.from?.pathname || "/";
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();

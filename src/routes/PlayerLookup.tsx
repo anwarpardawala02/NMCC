@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Box, Input, Button, VStack, Heading } from '@chakra-ui/react';
 import { TransactionsTable } from '../components/TransactionsTable';
-import { getPlayerWithTransactions } from '../lib/db';
+// import { getPlayerWithTransactions } from '../lib/db';
 
 export function PlayerLookup() {
   const [search, setSearch] = useState('');
@@ -9,13 +9,8 @@ export function PlayerLookup() {
 
   const handleSearch = async () => {
     if (!search) return;
-    try {
-      const data = await getPlayerWithTransactions(search);
-      setPlayer(data);
-    } catch (error) {
-      console.error('Failed to find player:', error);
-      setPlayer(null);
-    }
+  // TODO: Implement player lookup logic or re-add getPlayerWithTransactions
+  setPlayer(null);
   };
 
   if (!player) {

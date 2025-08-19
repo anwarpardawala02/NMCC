@@ -28,12 +28,8 @@ export function PhotoUploader({ onSuccess }: PhotoUploaderProps) {
     setLoading(true);
 
     try {
-      const photo = await uploadPhoto({
-        file,
-        title: file.name,
-        userId: user.id,
-      });
-      onSuccess(photo.url);
+  const url = await uploadPhoto(file, file.name);
+  onSuccess(url);
       toast({
         title: 'Success',
         description: 'Photo uploaded successfully',

@@ -4,7 +4,6 @@ import {
   HStack,
   FormControl, 
   FormLabel, 
-  Input, 
   NumberInput,
   NumberInputField,
   Button,

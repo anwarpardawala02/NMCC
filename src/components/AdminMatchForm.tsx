@@ -52,7 +52,7 @@ export function AdminMatchForm() {
     setLoading(true);
     
     try {
-      await createMatch(form);
+  await createMatch({ ...form, status: 'scheduled' });
       toast({
         title: 'Match Created',
         description: 'Match has been added to the fixture list',

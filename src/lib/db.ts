@@ -132,7 +132,7 @@ export async function listPlayers(full = false): Promise<Player[]> {
   const columns = full ? '*' : 'id,full_name,join_date,active,photo_url';
   const res = await supabase.from('players').select(columns).eq('active', true);
   if (res.error) throw res.error;
-  return res.data as Player[];
+  return res.data as unknown as Player[];
 }
 
 export async function getPlayer(id: string): Promise<Player> {
