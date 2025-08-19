@@ -37,46 +37,51 @@ export default function Layout() {
 
   return (
     <Box>
-      {/* Navbar */}
-      <Flex as="nav" p={4} bg="green.600" color="white" justify="space-between" align="center">
-        <HStack spacing={4}>
-          <Image 
-            src="https://images.pexels.com/photos/163452/basketball-dunk-blue-game-163452.jpeg?auto=compress&cs=tinysrgb&w=50&h=50&fit=crop" 
-            alt="Northolt Manor CC Logo" 
-            boxSize="40px" 
-            borderRadius="full"
-          />
-          <Box fontSize="xl" fontWeight="bold">Northolt Manor CC</Box>
-        </HStack>
-
-        {/* Desktop Navigation */}
-        <HStack spacing={4} display={{ base: 'none', md: 'flex' }}>
-          {navItems.map(item => (
-            <Link key={item.path} as={RouterLink} to={item.path} _hover={{ textDecoration: 'underline' }}>
-              {item.label}
-            </Link>
-          ))}
-          {user?.is_admin && (
-            <Link as={RouterLink} to="/admin" _hover={{ textDecoration: 'underline' }}>
-              Admin
-            </Link>
-          )}
-        </HStack>
-
-        <HStack spacing={2}>
-          {user ? (
-            <>
-              <Box fontSize="sm">Welcome, {user.full_name || user.email}</Box>
-              <Button size="sm" colorScheme="green" variant="outline" onClick={handleSignOut}>
+      {/* Header */}
+      <Box bg="#f5f7fa" px={{ base: 2, md: 8 }} py={2}>
+        <Flex align="center" justify="space-between">
+          <HStack spacing={4}>
+            <Box boxSize="64px" borderRadius="full" border="4px solid #1a3a5c" bg="white" display="flex" alignItems="center" justifyContent="center">
+              <Image
+                src="/Northolt_Manor_Cricket_Club_Logo_full__1_.png"
+                alt="Northolt Manor Cricket Club Logo"
+                boxSize="56px"
+                borderRadius="full"
+              />
+            </Box>
+            <Box fontSize="2xl" fontWeight="bold" color="#344563" letterSpacing="1px" textTransform="uppercase">
+              Northolt Manor CC
+            </Box>
+          </HStack>
+          {/* Right nav links */}
+          <HStack spacing={0} display={{ base: 'none', md: 'flex' }} align="center">
+            {navItems.map((item, idx) => (
+              <HStack key={item.path} spacing={0} align="center">
+                {idx !== 0 && <Box h="24px" borderLeft="2px solid #7ed957" mx={3} />}
+                <Link as={RouterLink} to={item.path} color="#1a3a5c" fontWeight="bold" fontSize="md" _hover={{ color: '#7ed957' }}>
+                  {item.label}
+                </Link>
+              </HStack>
+            ))}
+            {user?.is_admin && (
+              <HStack spacing={0} align="center">
+                <Box h="24px" borderLeft="2px solid #7ed957" mx={3} />
+                <Link as={RouterLink} to="/admin" color="#1a3a5c" fontWeight="bold" fontSize="md" _hover={{ color: '#7ed957' }}>
+                  Admin
+                </Link>
+              </HStack>
+            )}
+            <Box h="24px" borderLeft="2px solid #7ed957" mx={3} />
+            {user ? (
+              <Button size="sm" colorScheme="blue" variant="ghost" onClick={handleSignOut} fontWeight="bold">
                 Sign Out
               </Button>
-            </>
-          ) : (
-            <Button as={RouterLink} to="/login" size="sm" colorScheme="green" variant="outline">
-              Login
-            </Button>
-          )}
-          
+            ) : (
+              <Button as={RouterLink} to="/login" size="sm" colorScheme="blue" variant="ghost" fontWeight="bold">
+                Sign In
+              </Button>
+            )}
+          </HStack>
           {/* Mobile menu button */}
           <IconButton
             display={{ base: 'flex', md: 'none' }}
@@ -85,8 +90,10 @@ export default function Layout() {
             variant="outline"
             onClick={onOpen}
           />
-        </HStack>
-      </Flex>
+        </Flex>
+      </Box>
+      {/* Thick blue bar */}
+      <Box bg="#1a3a5c" h="10px" w="100%" />
 
       {/* Mobile Navigation Drawer */}
       <Drawer isOpen={isOpen} placement="right" onClose={onClose}>

@@ -50,11 +50,11 @@ export default function Home() {
     <Container maxW="container.xl" py={8}>
       {/* Hero Section */}
       <Box textAlign="center" mb={12}>
-        <Heading size="2xl" mb={4} color="green.600">
+        <Heading size="2xl" mb={4} color="#344563">
           Welcome to Northolt Manor Cricket Club
         </Heading>
         <Text fontSize="xl" color="gray.600" mb={6}>
-          Established in 1925, serving the community for nearly a century
+          Established in 1979, serving the community for nearly a half-century
         </Text>
         <HStack justify="center" spacing={4}>
           <Button as={RouterLink} to="/register" colorScheme="green" size="lg">
@@ -69,11 +69,20 @@ export default function Home() {
       {/* About Section */}
       <Box mb={12} p={6} bg="gray.50" borderRadius="lg">
         <Heading size="lg" mb={4}>About Our Club</Heading>
-        <Text fontSize="lg" lineHeight="tall">
-          Northolt Manor Cricket Club has been at the heart of local cricket for nearly 100 years. 
-          We pride ourselves on fostering talent, building community spirit, and maintaining the 
-          highest standards of sportsmanship. Whether you're a seasoned player or just starting 
-          your cricket journey, you'll find a warm welcome at our club.
+        <Text 
+          fontSize="lg" 
+          lineHeight="tall" 
+          textAlign="center"
+        >
+          Our club was established in the year 1979 and was called London Shabab Cricket Club &amp; later it was changed to Northolt Manor Cricket Club in 2019.
+          <br /><br />
+          We have been hosting friendly cricket fixtures as it gave our players flexibility to meet religious &amp; family commitments. We also have organised community UK T10 Tournaments &amp; our team holds the record of winning the most Trophies, most recent was in 2019.
+          <br /><br />
+          In 2021 we joined Middlesex County Cricket League. Our players enjoyed the experience &amp; competitiveness of playing in the league. Playing in the league for first year we finished 4th.
+          <br /><br />
+          We at Northolt Manor CC believe that without teamwork a team cannot succeed.
+          <br /><br />
+          Our aim is to build a team based on the following qualities which can make us a successful winning team. Communication, Hard Work, Motivation, Creative Freedom, Co-operation, Discipline, Respect &amp; Trust.
         </Text>
       </Box>
 

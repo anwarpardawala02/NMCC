@@ -55,6 +55,13 @@ export default function Sponsors() {
           </Text>
         </Box>
 
+        {/* Demo sponsor logos */}
+        <SimpleGrid columns={[1, 2, 3]} spacing={8} mb={4} justifyItems="center">
+          <Image src="/medium_Printwell_Logo.png" alt="Printwell Logo" maxH="60px" objectFit="contain" />
+          <Image src="/medium_Saifee_Silictors_Logo.png" alt="Saifee Solicitors Logo" maxH="60px" objectFit="contain" />
+          <Image src="/medium_Who_is_Hussain_-_Logo_-_Colour.png" alt="Who is Hussain Logo" maxH="60px" objectFit="contain" />
+        </SimpleGrid>
+
         {sponsors.length === 0 ? (
           <Box textAlign="center" py={12}>
             <Heading size="md" color="gray.500" mb={2}>

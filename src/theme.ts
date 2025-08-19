@@ -5,18 +5,28 @@ const theme = extendTheme({
     initialColorMode: 'light',
     useSystemColorMode: false,
   },
+  colors: {
+    nmccBlue: {
+      500: '#1a3a5c',
+      600: '#15304a',
+    },
+    nmccGreen: {
+      500: '#7ed957',
+    },
+  },
   styles: {
     global: {
       body: {
-        bg: 'gray.50',
-        color: 'gray.900',
+        bg: '#f5f7fa',
+        color: '#344563',
+        fontFamily: 'Segoe UI, Arial, sans-serif',
       },
     },
   },
   components: {
     Button: {
       baseStyle: {
-        fontWeight: 'normal',
+        fontWeight: 'bold',
       },
       defaultProps: {
         colorScheme: 'blue',
