@@ -1,27 +1,170 @@
 import { useEffect, useState } from "react";
-import { Box, Heading, SimpleGrid, Image } from "@chakra-ui/react";
-import { supabase } from "../lib/supabaseClient";
+import { 
+  Box, 
+  Heading, 
+  Text, 
+  SimpleGrid, 
+  Image, 
+  VStack, 
+  HStack,
+  Badge,
+  Button,
+  Container
+} from "@chakra-ui/react";
+import { Link as RouterLink } from "react-router-dom";
+import { listPhotos, listBlogs, listMatches } from "../lib/db";
+import type { Photo, Blog, Match } from "../lib/db";
 
 export default function Home() {
-  const [photos, setPhotos] = useState<{ id: string; url: string; title?: string }[]>([]);
+  const [photos, setPhotos] = useState<Photo[]>([]);
+  const [blogs, setBlogs] = useState<Blog[]>([]);
+  const [upcomingMatches, setUpcomingMatches] = useState<Match[]>([]);
 
   useEffect(() => {
-    async function fetchPhotos() {
-      const { data, error } = await supabase.from("photos").select("*").order("uploaded_at", { ascending: false });
-      if (error) console.error(error);
-      else setPhotos(data);
-    }
-    fetchPhotos();
+    loadData();
   }, []);
 
+  async function loadData() {
+    try {
+      const [photosData, blogsData, matchesData] = await Promise.all([
+        listPhotos(),
+        listBlogs(true),
+        listMatches()
+      ]);
+      
+      setPhotos(photosData.slice(0, 6)); // Show latest 6 photos
+      setBlogs(blogsData.slice(0, 3)); // Show latest 3 blogs
+      
+      // Filter upcoming matches
+      const today = new Date().toISOString().split('T')[0];
+      const upcoming = matchesData
+        .filter(match => match.match_date >= today && match.status === 'scheduled')
+        .slice(0, 3);
+      setUpcomingMatches(upcoming);
+    } catch (error) {
+      console.error('Failed to load data:', error);
+    }
+  }
+
   return (
-    <Box p={6}>
-      <Heading mb={4}>Club Photo Gallery</Heading>
-      <SimpleGrid columns={[1, 2, 3]} spacing={4}>
-        {photos.map((p) => (
-          <Image key={p.id} src={p.url} alt={p.title} borderRadius="md" />
-        ))}
-      </SimpleGrid>
-    </Box>
+    <Container maxW="container.xl" py={8}>
+      {/* Hero Section */}
+      <Box textAlign="center" mb={12}>
+        <Heading size="2xl" mb={4} color="green.600">
+          Welcome to Northolt Manor Cricket Club
+        </Heading>
+        <Text fontSize="xl" color="gray.600" mb={6}>
+          Established in 1925, serving the community for nearly a century
+        </Text>
+        <HStack justify="center" spacing={4}>
+          <Button as={RouterLink} to="/register" colorScheme="green" size="lg">
+            Join Our Club
+          </Button>
+          <Button as={RouterLink} to="/matches" variant="outline" size="lg">
+            View Fixtures
+          </Button>
+        </HStack>
+      </Box>
+
+      {/* About Section */}
+      <Box mb={12} p={6} bg="gray.50" borderRadius="lg">
+        <Heading size="lg" mb={4}>About Our Club</Heading>
+        <Text fontSize="lg" lineHeight="tall">
+          Northolt Manor Cricket Club has been at the heart of local cricket for nearly 100 years. 
+          We pride ourselves on fostering talent, building community spirit, and maintaining the 
+          highest standards of sportsmanship. Whether you're a seasoned player or just starting 
+          your cricket journey, you'll find a warm welcome at our club.
+        </Text>
+      </Box>
+
+      {/* Upcoming Matches */}
+      {upcomingMatches.length > 0 && (
+        <Box mb={12}>
+          <Heading size="lg" mb={6}>Upcoming Matches</Heading>
+          <SimpleGrid columns={[1, 2, 3]} spacing={6}>
+            {upcomingMatches.map((match) => (
+              <Box key={match.id} p={4} borderWidth={1} borderRadius="lg" bg="white">
+                <VStack align="start" spacing={2}>
+                  <Badge colorScheme={match.home_away === 'home' ? 'green' : 'blue'}>
+                    {match.home_away.toUpperCase()}
+                  </Badge>
+                  <Heading size="md">vs {match.opponent}</Heading>
+                  <Text color="gray.600">
+                    {new Date(match.match_date).toLocaleDateString()}
+                  </Text>
+                  <Text fontSize="sm" color="gray.500">
+                    {match.venue}
+                  </Text>
+                </VStack>
+              </Box>
+            ))}
+          </SimpleGrid>
+          <Box textAlign="center" mt={6}>
+            <Button as={RouterLink} to="/matches" variant="outline">
+              View All Fixtures
+            </Button>
+          </Box>
+        </Box>
+      )}
+
+      {/* Latest News */}
+      {blogs.length > 0 && (
+        <Box mb={12}>
+          <Heading size="lg" mb={6}>Latest News</Heading>
+          <SimpleGrid columns={[1, 2, 3]} spacing={6}>
+            {blogs.map((blog) => (
+              <Box key={blog.id} borderWidth={1} borderRadius="lg" overflow="hidden" bg="white">
+                {blog.featured_image && (
+                  <Image src={blog.featured_image} alt={blog.title} h="200px" w="full" objectFit="cover" />
+                )}
+                <Box p={4}>
+                  <Heading size="md" mb={2} noOfLines={2}>
+                    {blog.title}
+                  </Heading>
+                  <Text color="gray.600" noOfLines={3} mb={3}>
+                    {blog.excerpt}
+                  </Text>
+                  <Button as={RouterLink} to={`/blog/${blog.id}`} size="sm" variant="outline">
+                    Read More
+                  </Button>
+                </Box>
+              </Box>
+            ))}
+          </SimpleGrid>
+          <Box textAlign="center" mt={6}>
+            <Button as={RouterLink} to="/blog" variant="outline">
+              View All News
+            </Button>
+          </Box>
+        </Box>
+      )}
+
+      {/* Photo Gallery Preview */}
+      {photos.length > 0 && (
+        <Box>
+          <Heading size="lg" mb={6}>Gallery</Heading>
+          <SimpleGrid columns={[2, 3, 6]} spacing={4}>
+            {photos.map((photo) => (
+              <Box key={photo.id} borderRadius="lg" overflow="hidden">
+                <Image 
+                  src={photo.url} 
+                  alt={photo.title} 
+                  h="150px" 
+                  w="full" 
+                  objectFit="cover"
+                  _hover={{ transform: 'scale(1.05)' }}
+                  transition="transform 0.2s"
+                />
+              </Box>
+            ))}
+          </SimpleGrid>
+          <Box textAlign="center" mt={6}>
+            <Button as={RouterLink} to="/gallery" variant="outline">
+              View Full Gallery
+            </Button>
+          </Box>
+        </Box>
+      )}
+    </Container>
   );
 }
