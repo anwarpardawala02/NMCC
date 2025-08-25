@@ -16,6 +16,9 @@ import ForgotPassword from "../pages/ForgotPassword";
 import ResetPassword from "../pages/ResetPassword";
 import Team from "../pages/Team";
 import Unauthorized from "../pages/Unauthorized";
+import FixtureAvailabilityPage from "../pages/FixtureAvailabilityPage";
+import FixtureManagerPage from "../pages/FixtureManagerPage";
+import FixtureAvailabilityDetailPage from "../pages/FixtureAvailabilityDetailPage";
 
 // Team subpages
 import TeamSquad from "../pages/team/Squad";
@@ -70,12 +73,20 @@ export default function Layout() {
               </HStack>
             ))}
             {user?.is_admin && (
-              <HStack spacing={0} align="center">
-                <Box h="24px" borderLeft="2px solid #7ed957" mx={3} />
-                <Link as={RouterLink} to="/admin" color="#1a3a5c" fontWeight="bold" fontSize="md" _hover={{ color: '#7ed957' }}>
-                  Admin
-                </Link>
-              </HStack>
+              <>
+                <HStack spacing={0} align="center">
+                  <Box h="24px" borderLeft="2px solid #7ed957" mx={3} />
+                  <Link as={RouterLink} to="/admin" color="#1a3a5c" fontWeight="bold" fontSize="md" _hover={{ color: '#7ed957' }}>
+                    Admin
+                  </Link>
+                </HStack>
+                <HStack spacing={0} align="center">
+                  <Box h="24px" borderLeft="2px solid #7ed957" mx={3} />
+                  <Link as={RouterLink} to="/fixtures/manage" color="#1a3a5c" fontWeight="bold" fontSize="md" _hover={{ color: '#7ed957' }}>
+                    Fixtures
+                  </Link>
+                </HStack>
+              </>
             )}
             <Box h="24px" borderLeft="2px solid #7ed957" mx={3} />
             {user ? (
@@ -140,9 +151,14 @@ export default function Layout() {
                 </Link>
               ))}
               {user?.is_admin && (
-                <Link as={RouterLink} to="/admin" onClick={onClose} color="red.500" fontWeight="bold">
-                  Admin Dashboard
-                </Link>
+                <>
+                  <Link as={RouterLink} to="/admin" onClick={onClose} color="red.500" fontWeight="bold">
+                    Admin Dashboard
+                  </Link>
+                  <Link as={RouterLink} to="/fixtures/manage" onClick={onClose} color="blue.500" fontWeight="bold">
+                    Manage Fixtures
+                  </Link>
+                </>
               )}
               
               {user ? (
@@ -179,6 +195,9 @@ export default function Layout() {
           <Route path="/reset-password" element={<ResetPassword />} />
           <Route path="/admin" element={<Admin />} />
           <Route path="/unauthorized" element={<Unauthorized />} />
+          <Route path="/fixtures/:fixtureId/availability" element={<FixtureAvailabilityPage />} />
+          <Route path="/fixtures/:fixtureId/availability-detail" element={<FixtureAvailabilityDetailPage />} />
+          <Route path="/fixtures/manage" element={<FixtureManagerPage />} />
         </Routes>
       </Box>
 

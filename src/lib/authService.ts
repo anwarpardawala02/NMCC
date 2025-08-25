@@ -5,9 +5,9 @@ export interface AuthPlayer {
   id: string;
   email: string;
   full_name: string;
-  is_admin: boolean;
   role: string;
   login_name: string;
+  is_admin: boolean;
 }
 
 export interface LoginCredentials {
@@ -48,42 +48,86 @@ export class AuthError extends Error {
 
 // Authentication service
 export class AuthService {
-  // Sign in with login_name and password
-  static async signIn({ login_name, password }: LoginCredentials): Promise<AuthPlayer> {
+  // Authenticate user against Supabase players table
+  static async signIn(credentials: LoginCredentials): Promise<AuthPlayer> {
+    console.log("Authenticating with login_name:", credentials.login_name);
+
     try {
-      const { data, error } = await supabase
+      // Call the database function to check credentials and get player data
+      type AuthResponse = {
+        id: string;
+        email: string;
+        full_name: string;
+        role: string;
+        login_name: string;
+        is_admin: boolean;
+      };
+
+
+
+
+      const { data: authDataRaw, error: authError } = await supabase
         .rpc('check_player_password', {
-          p_login_name: login_name,
-          p_password: password
-        });
+          p_login_name: credentials.login_name,
+          p_password: credentials.password
+        })
+        .single();
 
-      if (error) throw new AuthError(error.message);
-      if (!data || data.length === 0) throw new AuthError('Invalid username or password');
+      const authData = authDataRaw as AuthResponse | null;
 
-      // Store player data in local storage
-      const player = data[0] as AuthPlayer;
-      localStorage.setItem('cricket_club_player', JSON.stringify(player));
-      
-      return player;
-    } catch (error: any) {
-      console.error('Sign in error:', error);
-      throw new AuthError(error.message || 'Failed to sign in');
+      if (authError) {
+        console.error("Authentication failed:", authError);
+        throw new AuthError("Invalid username or password.");
+      }
+
+      if (!authData) {
+        throw new AuthError("Invalid credentials.");
+      }
+
+      // Create the authenticated player object
+      const authenticatedPlayer: AuthPlayer = {
+        id: authData.id,
+        email: authData.email,
+        full_name: authData.full_name,
+        role: authData.role,
+        login_name: authData.login_name,
+        is_admin: authData.is_admin
+      };
+
+      // Store the player in localStorage
+      localStorage.setItem('cricket_club_player', JSON.stringify(authenticatedPlayer));
+      console.log("User authenticated:", authenticatedPlayer);
+
+      return authenticatedPlayer;
+    } catch (error) {
+      console.error("Authentication error:", error);
+      if (error instanceof AuthError) {
+        throw error;
+      }
+      throw new AuthError("Authentication failed");
     }
   }
 
   // Sign out
   static async signOut(): Promise<void> {
     localStorage.removeItem('cricket_club_player');
+    console.log("User signed out");
   }
 
   // Get current authenticated player
   static getCurrentPlayer(): AuthPlayer | null {
-    const playerData = localStorage.getItem('cricket_club_player');
-    if (!playerData) return null;
-    
     try {
-      return JSON.parse(playerData) as AuthPlayer;
+      const playerData = localStorage.getItem('cricket_club_player');
+      if (!playerData) {
+        console.log("No authenticated user found");
+        return null;
+      }
+      
+      const player = JSON.parse(playerData) as AuthPlayer;
+      console.log("Found authenticated user:", player);
+      return player;
     } catch (error) {
+      console.error("Error retrieving user data:", error);
       localStorage.removeItem('cricket_club_player');
       return null;
     }
@@ -249,7 +293,7 @@ export class AuthService {
   // Check if user is admin
   static isAdmin(): boolean {
     const player = this.getCurrentPlayer();
-    return !!player?.is_admin;
+    return player?.role === 'admin';
   }
 
   // Check if user has specific role

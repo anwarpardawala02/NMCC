@@ -8,8 +8,11 @@ import {
   Tab,
   TabPanel,
   Container,
-  VStack
+  VStack,
+  Button
 } from "@chakra-ui/react";
+import { CalendarIcon } from "@chakra-ui/icons";
+import { Link } from "react-router-dom";
 import { RequireAdmin } from "../routes/RequireAdmin";
 import { TransactionForm } from "../components/TransactionForm";
 import { TransactionsTable } from "../components/TransactionsTable";
@@ -58,9 +61,19 @@ function AdminDashboard() {
   return (
     <Container maxW="container.xl" py={8}>
       <VStack spacing={8} align="stretch">
-        <Heading size="xl" color="green.600">
-          Club Administration
-        </Heading>
+        <Box display="flex" justifyContent="space-between" alignItems="center">
+          <Heading size="xl" color="green.600">
+            Club Administration
+          </Heading>
+          <Button 
+            as={Link} 
+            to="/fixtures/manage" 
+            colorScheme="blue" 
+            leftIcon={<CalendarIcon />}
+          >
+            Manage Fixtures
+          </Button>
+        </Box>
 
         <Tabs colorScheme="green">
           <TabList>

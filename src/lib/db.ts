@@ -22,6 +22,7 @@ export interface Photo {
   uploaded_at: string;
 }
 
+
 export interface Blog {
   id: string;
   title: string;
@@ -35,6 +36,10 @@ export interface Blog {
   author?: Player;
 }
 
+// Fixtures Functions
+
+// (Removed duplicate definitions at the top of the file)
+
 export interface Sponsor {
   id: string;
   name: string;
@@ -43,6 +48,18 @@ export interface Sponsor {
   description?: string;
   tier: 'platinum' | 'gold' | 'silver' | 'bronze';
   active: boolean;
+  created_at: string;
+}
+
+export interface Fixture {
+  id: string;
+  opponent: string;
+  fixture_date: string;
+  fixture_time?: string;
+  venue: string;
+  home_away: 'home' | 'away';
+  status: 'scheduled' | 'in_progress' | 'completed' | 'cancelled';
+  notes?: string;
   created_at: string;
 }
 
@@ -121,11 +138,55 @@ export interface Poll {
 export interface Fixture {
   id: string;
   opponent: string;
-  fixture_date: string;
-  ground: string;
-  home_away: 'home' | 'away';
+  fixture_date: string; // maps from fixtures.date
+  venue: string;        // maps from fixtures.ground
+  home_away: 'home' | 'away'; // maps from 'Home' | 'Away'
+  status: 'scheduled' | 'in_progress' | 'completed' | 'cancelled';
   notes?: string;
   created_at: string;
+}
+
+// Database row for fixtures table
+type FixtureRow = {
+  id: string;
+  date: string;
+  opponent: string | null;
+  home_away: 'Home' | 'Away' | null;
+  ground: string | null;
+  notes: string | null;
+};
+
+function mapFixtureRowToFixture(r: FixtureRow): Fixture {
+  return {
+    id: r.id,
+    opponent: r.opponent ?? '',
+    fixture_date: r.date,
+    venue: r.ground ?? '',
+    home_away: (r.home_away?.toLowerCase() as 'home' | 'away') ?? 'home',
+    status: 'scheduled',
+    notes: r.notes ?? undefined,
+    created_at: `${r.date}T00:00:00.000Z`
+  };
+}
+
+function mapFixtureToRow(f: Omit<Fixture, 'id' | 'created_at'>): Partial<FixtureRow> {
+  return {
+    date: f.fixture_date,
+    opponent: f.opponent,
+    home_away: f.home_away === 'home' ? 'Home' : 'Away',
+    ground: f.venue,
+    notes: f.notes ?? null
+  };
+}
+
+export interface Availability {
+  id: string;
+  fixture_id: string;
+  player_id: string;
+  status: 'Available' | 'Not Available';
+  responded_on: string;
+  player?: Player;
+  fixture?: Fixture;
 }
 
 export interface Fee {
@@ -275,6 +336,57 @@ export async function createSponsor(sponsor: Omit<Sponsor, 'id' | 'created_at'>)
     .single();
   if (error) throw error;
   return data;
+}
+
+// Fixture functions
+export async function listFixtures(): Promise<Fixture[]> {
+  const { data, error } = await supabase
+    .from('fixtures')
+    .select('id, date, opponent, home_away, ground, notes')
+    .order('date', { ascending: true });
+  if (error) throw error;
+  return (data as FixtureRow[]).map(mapFixtureRowToFixture);
+}
+
+export async function getFixture(id: string): Promise<Fixture> {
+  const { data, error } = await supabase
+    .from('fixtures')
+    .select('id, date, opponent, home_away, ground, notes')
+    .eq('id', id)
+    .single();
+  if (error) throw error;
+  return mapFixtureRowToFixture(data as FixtureRow);
+}
+
+export async function createFixture(fixture: Omit<Fixture, 'id' | 'created_at'>): Promise<Fixture> {
+  const row = mapFixtureToRow(fixture);
+  const { data, error } = await supabase
+    .from('fixtures')
+    .insert([row])
+    .select('id, date, opponent, home_away, ground, notes')
+    .single();
+  if (error) throw error;
+  return mapFixtureRowToFixture(data as FixtureRow);
+}
+
+export async function updateFixture(id: string, updates: Partial<Fixture>): Promise<Fixture> {
+  const row = mapFixtureToRow(updates as Omit<Fixture, 'id' | 'created_at'>);
+  const { data, error } = await supabase
+    .from('fixtures')
+    .update(row)
+    .eq('id', id)
+    .select('id, date, opponent, home_away, ground, notes')
+    .single();
+  if (error) throw error;
+  return mapFixtureRowToFixture(data as FixtureRow);
+}
+
+export async function deleteFixture(id: string): Promise<void> {
+  const { error } = await supabase
+    .from('fixtures')
+    .delete()
+    .eq('id', id);
+  if (error) throw error;
 }
 
 // Financial functions
@@ -445,24 +557,8 @@ export async function votePoll(pollId: string, option: string) {
 }
 
 // Fixtures Functions
-export async function createFixture(fixtureData: Omit<Fixture, 'id' | 'created_at'>) {
-  const { data, error } = await supabase
-    .from('fixtures')
-    .insert([fixtureData])
-    .select()
-    .single();
-  if (error) throw error;
-  return data;
-}
 
-export async function listFixtures(): Promise<Fixture[]> {
-  const { data, error } = await supabase
-    .from('fixtures')
-    .select('*')
-    .order('fixture_date', { ascending: true });
-  if (error) throw error;
-  return data as Fixture[];
-}
+// (Removed duplicate definitions at the end of the file)
 
 // Fees Functions
 export async function createFee(feeData: Omit<Fee, 'id' | 'created_at'>) {
@@ -502,4 +598,71 @@ export async function listExpenses(): Promise<Expense[]> {
     .order('expense_date', { ascending: false });
   if (error) throw error;
   return data as Expense[];
+}
+
+// Availability Functions
+export async function setAvailability(fixtureId: string, playerId: string, status: 'Available' | 'Not Available') {
+  const { data, error } = await supabase
+    .from('availability')
+    .upsert({
+      fixture_id: fixtureId,
+      player_id: playerId,
+      status,
+    })
+    .select()
+    .single();
+  if (error) throw error;
+  return data;
+}
+
+export async function getFixtureAvailability(fixtureId: string): Promise<Availability[]> {
+  const { data, error } = await supabase
+    .from('availability')
+    .select('*, player:players(id, full_name, photo_url)')
+    .eq('fixture_id', fixtureId);
+  if (error) throw error;
+  return data as Availability[];
+}
+
+export async function getPlayerAvailability(playerId: string): Promise<Availability[]> {
+  const { data, error } = await supabase
+    .from('availability')
+    .select('*, fixture:fixtures(*)')
+    .eq('player_id', playerId);
+  if (error) throw error;
+  return data as Availability[];
+}
+
+export async function getFixtureWithAvailability(fixtureId: string): Promise<Fixture & { available_count: number; not_available_count: number }> {
+  // Get fixture details
+  const { data: fixture, error: fixtureError } = await supabase
+    .from('fixtures')
+    .select('*')
+    .eq('id', fixtureId)
+    .single();
+  
+  if (fixtureError) throw fixtureError;
+  
+  // Get availability counts
+  const { data: availablePlayers, error: availableError } = await supabase
+    .from('availability')
+    .select('id')
+    .eq('fixture_id', fixtureId)
+    .eq('status', 'Available');
+    
+  if (availableError) throw availableError;
+  
+  const { data: notAvailablePlayers, error: notAvailableError } = await supabase
+    .from('availability')
+    .select('id')
+    .eq('fixture_id', fixtureId)
+    .eq('status', 'Not Available');
+    
+  if (notAvailableError) throw notAvailableError;
+  
+  return {
+    ...fixture,
+    available_count: availablePlayers.length,
+    not_available_count: notAvailablePlayers.length
+  };
 }

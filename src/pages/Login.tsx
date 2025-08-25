@@ -2,29 +2,27 @@ import { useState } from "react";
 import { 
   Box, 
   Button, 
-  FormControl, 
-  FormLabel, 
-  Input, 
   VStack, 
   Heading,
   Text,
   useToast,
   Container,
-  InputGroup,
-  InputRightElement,
-  IconButton
+  Alert,
+  AlertIcon,
+  AlertTitle,
+  FormControl,
+  FormLabel,
+  Input
 } from "@chakra-ui/react";
-import { ViewIcon, ViewOffIcon } from "@chakra-ui/icons";
-import { useAuth } from "../hooks/useAuth";
 import { Link, useNavigate } from "react-router-dom";
+import { useAuth } from "../hooks/useAuth";
 import type { LoginCredentials } from "../lib/authService";
 
 export default function Login() {
   const [credentials, setCredentials] = useState<LoginCredentials>({
     login_name: "",
-    password: ""
+    password: "dev-mode-no-password" // Password is not used in dev mode
   });
-  const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const { signIn } = useAuth();
   const toast = useToast();
@@ -32,31 +30,38 @@ export default function Login() {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (!credentials.login_name || !credentials.password) {
+    
+    if (!credentials.login_name) {
       toast({
-        title: "Missing Fields",
-        description: "Please enter both username and password.",
+        title: "Missing Username",
+        description: "Please enter your username to login.",
         status: "warning",
         duration: 5000,
       });
       return;
     }
-
+    
     setLoading(true);
     try {
-      await signIn(credentials);
+      console.log("Attempting to sign in with:", credentials.login_name);
+      const user = await signIn(credentials);
+      
       toast({
         title: "Login Successful!",
-        description: "You are now logged in.",
+        description: user.is_admin ? 
+          "Welcome admin! You now have access to administrative features." : 
+          "You have been logged in successfully.",
         status: "success",
         duration: 5000,
       });
+      
       // Redirect to home page after successful login
       navigate('/');
     } catch (error: any) {
+      console.error("Login error:", error);
       toast({
         title: "Login Failed",
-        description: error.message,
+        description: error.message || "Authentication failed. Please check your username.",
         status: "error",
         duration: 5000,
       });
@@ -76,6 +81,12 @@ export default function Login() {
             Enter your credentials to sign in
           </Text>
         </Box>
+        
+        <Alert status="info" variant="solid" borderRadius="md">
+          <AlertIcon />
+          <AlertTitle>Development Mode</AlertTitle>
+          <Text fontSize="sm">Just enter any username - no password needed. All users are granted admin access.</Text>
+        </Alert>
 
         <Box p={6} borderWidth={1} borderRadius="lg" bg="white">
           <form onSubmit={handleSubmit}>
@@ -89,26 +100,9 @@ export default function Login() {
                 />
               </FormControl>
 
-              <FormControl isRequired>
-                <FormLabel>Password</FormLabel>
-                <InputGroup>
-                  <Input
-                    type={showPassword ? "text" : "password"}
-                    value={credentials.password}
-                    onChange={(e) => setCredentials({...credentials, password: e.target.value})}
-                    placeholder="Enter your password"
-                  />
-                  <InputRightElement>
-                    <IconButton
-                      aria-label={showPassword ? "Hide password" : "Show password"}
-                      icon={showPassword ? <ViewOffIcon /> : <ViewIcon />}
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => setShowPassword(!showPassword)}
-                    />
-                  </InputRightElement>
-                </InputGroup>
-              </FormControl>
+              <Text fontSize="sm" color="gray.500">
+                Development mode: Enter your username from the players table
+              </Text>
 
               <Button
                 type="submit"
@@ -120,14 +114,6 @@ export default function Login() {
               >
                 Sign In
               </Button>
-              
-              <Box w="full" textAlign="center">
-                <Text fontSize="sm" color="gray.600">
-                  <Link to="/forgot-password" style={{color: '#2C7A7B'}}>
-                    Forgot your password?
-                  </Link>
-                </Text>
-              </Box>
             </VStack>
           </form>
         </Box>
