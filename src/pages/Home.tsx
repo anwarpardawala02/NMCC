@@ -60,7 +60,7 @@ export default function Home() {
           <Button as={RouterLink} to="/register" colorScheme="green" size="lg">
             Join Our Club
           </Button>
-          <Button as={RouterLink} to="/matches" variant="outline" size="lg">
+          <Button as={RouterLink} to="/team/matches" variant="outline" size="lg">
             View Fixtures
           </Button>
         </HStack>
@@ -109,7 +109,7 @@ export default function Home() {
             ))}
           </SimpleGrid>
           <Box textAlign="center" mt={6}>
-            <Button as={RouterLink} to="/matches" variant="outline">
+            <Button as={RouterLink} to="/team/matches" variant="outline">
               View All Fixtures
             </Button>
           </Box>

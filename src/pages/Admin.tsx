@@ -10,6 +10,7 @@ import {
   Container,
   VStack
 } from "@chakra-ui/react";
+import { RequireAdmin } from "../routes/RequireAdmin";
 import { TransactionForm } from "../components/TransactionForm";
 import { TransactionsTable } from "../components/TransactionsTable";
 import { SummaryCards } from "../components/SummaryCards";
@@ -18,9 +19,12 @@ import { AdminBlogForm } from "../components/AdminBlogForm";
 import { AdminSponsorForm } from "../components/AdminSponsorForm";
 import { AdminPollForm } from "../components/AdminPollForm";
 import { AdminStatsForm } from "../components/AdminStatsForm";
+import { AdminFixtureForm } from "../components/AdminFixtureForm";
+import { AdminFeesForm } from "../components/AdminFeesForm";
+import { AdminExpensesForm } from "../components/AdminExpensesForm";
 import { listTransactions } from "../lib/db";
 
-export default function Admin() {
+function AdminDashboard() {
   const [transactions, setTransactions] = useState<any[]>([]);
   const [filters, setFilters] = useState<{ month: string; kind: string }>({
     month: new Date().toISOString().slice(0, 7),
@@ -60,7 +64,10 @@ export default function Admin() {
 
         <Tabs colorScheme="green">
           <TabList>
-            <Tab>Finance</Tab>
+            <Tab>Transactions</Tab>
+            <Tab>Fixtures</Tab>
+            <Tab>Fees</Tab>
+            <Tab>Expenses</Tab>
             <Tab>Matches</Tab>
             <Tab>Blog</Tab>
             <Tab>Sponsors</Tab>
@@ -69,7 +76,7 @@ export default function Admin() {
           </TabList>
 
           <TabPanels>
-            {/* Finance Tab */}
+            {/* Transactions Tab */}
             <TabPanel>
               <VStack spacing={8} align="stretch">
                 <SummaryCards data={summaryData} />
@@ -90,6 +97,21 @@ export default function Admin() {
                   />
                 </Box>
               </VStack>
+            </TabPanel>
+
+            {/* Fixtures Tab */}
+            <TabPanel>
+              <AdminFixtureForm />
+            </TabPanel>
+
+            {/* Fees Tab */}
+            <TabPanel>
+              <AdminFeesForm />
+            </TabPanel>
+
+            {/* Expenses Tab */}
+            <TabPanel>
+              <AdminExpensesForm />
             </TabPanel>
 
             {/* Matches Tab */}
@@ -120,5 +142,14 @@ export default function Admin() {
         </Tabs>
       </VStack>
     </Container>
+  );
+}
+
+// Export a wrapped version of the component that requires admin privileges
+export default function Admin() {
+  return (
+    <RequireAdmin>
+      <AdminDashboard />
+    </RequireAdmin>
   );
 }
