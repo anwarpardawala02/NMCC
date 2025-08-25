@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Reset Email Function</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; }
+        h1 { color: #1a3a5c; }
+        input, button { padding: 10px; margin: 10px 0; width: 100%; box-sizing: border-box; }
+        button { background-color: #7ed957; border: none; color: white; cursor: pointer; }
+        button:hover { background-color: #6bc248; }
+        .result { margin-top: 20px; padding: 15px; border: 1px solid #ddd; white-space: pre-wrap; }
+        .success { border-color: #7ed957; }
+        .error { border-color: #ff6b6b; }
+    </style>
+</head>
+<body>
+    <h1>Test Reset Email Function</h1>
+    <div>
+        <label for="email">Email Address:</label>
+        <input type="email" id="email" placeholder="Enter email address">
+    </div>
+    <div>
+        <label for="token">Reset Token:</label>
+        <input type="text" id="token" placeholder="Enter reset token or leave for random token">
+    </div>
+    <button id="sendBtn">Send Reset Email</button>
+    
+    <div id="result" class="result" style="display: none;"></div>
+
+    <script>
+        document.getElementById('sendBtn').addEventListener('click', async function() {
+            const email = document.getElementById('email').value;
+            let token = document.getElementById('token').value;
+            
+            if (!email) {
+                alert('Please enter an email address');
+                return;
+            }
+            
+            if (!token) {
+                // Generate a random token if none provided
+                token = Math.random().toString(36).substring(2, 15) + 
+                       Math.random().toString(36).substring(2, 15);
+            }
+            
+            const resultDiv = document.getElementById('result');
+            resultDiv.innerHTML = 'Sending email...';
+            resultDiv.style.display = 'block';
+            resultDiv.className = 'result';
+            
+            try {
+                // Replace with your actual function URL
+                const functionUrl = 'https://PROJECT_ID.supabase.co/functions/v1/send-reset-email';
+                
+                const response = await fetch(functionUrl, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        email,
+                        token
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    resultDiv.className = 'result success';
+                    resultDiv.innerHTML = 'Email sent successfully!\n\nResponse:\n' + 
+                                         JSON.stringify(data, null, 2);
+                } else {
+                    resultDiv.className = 'result error';
+                    resultDiv.innerHTML = 'Failed to send email.\n\nError:\n' + 
+                                         JSON.stringify(data, null, 2);
+                }
+            } catch (error) {
+                resultDiv.className = 'result error';
+                resultDiv.innerHTML = 'Error: ' + error.message;
+            }
+        });
+    </script>
+</body>
+</html>

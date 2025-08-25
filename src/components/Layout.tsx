@@ -10,10 +10,17 @@ import Gallery from "../pages/Gallery";
 import Blog from "../pages/Blog";
 import BlogPost from "../pages/BlogPost";
 import Sponsors from "../pages/Sponsors";
-import Matches from "../pages/Matches";
-import Statistics from "../pages/Statistics";
 import Admin from "../pages/Admin";
 import Login from "../pages/Login";
+import ForgotPassword from "../pages/ForgotPassword";
+import ResetPassword from "../pages/ResetPassword";
+import Team from "../pages/Team";
+import Unauthorized from "../pages/Unauthorized";
+
+// Team subpages
+import TeamSquad from "../pages/team/Squad";
+import TeamMatches from "../pages/team/Matches";
+import TeamStatistics from "../pages/team/Statistics";
 
 export default function Layout() {
   const { user, signOut } = useAuth();
@@ -27,12 +34,11 @@ export default function Layout() {
 
   const navItems = [
     { label: 'Home', path: '/' },
+    { label: 'Team', path: '/team' },
     { label: 'Register', path: '/register' },
     { label: 'Gallery', path: '/gallery' },
     { label: 'Blog', path: '/blog' },
     { label: 'Sponsors', path: '/sponsors' },
-    { label: 'Matches', path: '/matches' },
-    { label: 'Statistics', path: '/statistics' },
   ];
 
   return (
@@ -73,9 +79,22 @@ export default function Layout() {
             )}
             <Box h="24px" borderLeft="2px solid #7ed957" mx={3} />
             {user ? (
-              <Button size="sm" colorScheme="blue" variant="ghost" onClick={handleSignOut} fontWeight="bold">
-                Sign Out
-              </Button>
+              <HStack>
+                <Box 
+                  px={2}
+                  py={1}
+                  bg={user.is_admin ? "green.100" : "blue.50"} 
+                  color={user.is_admin ? "green.800" : "blue.800"}
+                  borderRadius="md" 
+                  fontSize="xs" 
+                  fontWeight="bold"
+                >
+                  {user.is_admin ? '👑 ADMIN' : '👤 MEMBER'}
+                </Box>
+                <Button size="sm" colorScheme="blue" variant="ghost" onClick={handleSignOut} fontWeight="bold">
+                  Sign Out
+                </Button>
+              </HStack>
             ) : (
               <Button as={RouterLink} to="/login" size="sm" colorScheme="blue" variant="ghost" fontWeight="bold">
                 Sign In
@@ -102,15 +121,38 @@ export default function Layout() {
           <DrawerHeader>Navigation</DrawerHeader>
           <DrawerBody>
             <VStack spacing={4} align="stretch">
+              {user && (
+                <Box 
+                  p={3}
+                  bg={user.is_admin ? "green.100" : "blue.50"} 
+                  color={user.is_admin ? "green.800" : "blue.800"}
+                  borderRadius="md"
+                  mb={2}
+                >
+                  <Box fontWeight="bold">{user.is_admin ? 'Admin User' : 'Club Member'}</Box>
+                  <Box fontSize="sm">{user.email}</Box>
+                </Box>
+              )}
+              
               {navItems.map(item => (
                 <Link key={item.path} as={RouterLink} to={item.path} onClick={onClose}>
                   {item.label}
                 </Link>
               ))}
               {user?.is_admin && (
-                <Link as={RouterLink} to="/admin" onClick={onClose}>
-                  Admin
+                <Link as={RouterLink} to="/admin" onClick={onClose} color="red.500" fontWeight="bold">
+                  Admin Dashboard
                 </Link>
+              )}
+              
+              {user ? (
+                <Button colorScheme="red" onClick={() => { handleSignOut(); onClose(); }}>
+                  Sign Out
+                </Button>
+              ) : (
+                <Button as={RouterLink} to="/login" colorScheme="green" onClick={onClose}>
+                  Sign In
+                </Button>
               )}
             </VStack>
           </DrawerBody>
@@ -121,15 +163,22 @@ export default function Layout() {
       <Box minH="calc(100vh - 80px)">
         <Routes>
           <Route path="/" element={<Home />} />
+          <Route path="/team" element={<Team />}>
+            <Route path="/team/squad" element={<TeamSquad />} />
+            <Route path="/team/matches" element={<TeamMatches />} />
+            <Route path="/team/statistics" element={<TeamStatistics />} />
+            <Route index element={<TeamSquad />} />
+          </Route>
           <Route path="/register" element={<Register />} />
           <Route path="/gallery" element={<Gallery />} />
           <Route path="/blog" element={<Blog />} />
           <Route path="/blog/:id" element={<BlogPost />} />
           <Route path="/sponsors" element={<Sponsors />} />
-          <Route path="/matches" element={<Matches />} />
-          <Route path="/statistics" element={<Statistics />} />
           <Route path="/login" element={<Login />} />
-          {user?.is_admin && <Route path="/admin" element={<Admin />} />}
+          <Route path="/forgot-password" element={<ForgotPassword />} />
+          <Route path="/reset-password" element={<ResetPassword />} />
+          <Route path="/admin" element={<Admin />} />
+          <Route path="/unauthorized" element={<Unauthorized />} />
         </Routes>
       </Box>
 

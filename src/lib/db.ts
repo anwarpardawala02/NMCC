@@ -9,6 +9,7 @@ export interface Player {
   join_date: string;
   active: boolean;
   is_admin: boolean;
+  role?: 'player' | 'secretary' | 'treasurer' | 'admin';
   created_at: string;
 }
 
@@ -117,11 +118,46 @@ export interface Poll {
   created_at: string;
 }
 
+export interface Fixture {
+  id: string;
+  opponent: string;
+  fixture_date: string;
+  ground: string;
+  home_away: 'home' | 'away';
+  notes?: string;
+  created_at: string;
+}
+
+export interface Fee {
+  id: string;
+  player_id: string;
+  fee_type: 'membership' | 'match' | 'training' | 'other';
+  amount: number;
+  due_date: string;
+  paid: boolean;
+  notes?: string;
+  created_at: string;
+  player?: Player;
+}
+
+export interface Expense {
+  id: string;
+  expense_type: 'equipment' | 'ground' | 'travel' | 'refreshments' | 'other';
+  amount: number;
+  expense_date: string;
+  description: string;
+  paid_by: string;
+  reimbursed: boolean;
+  created_at: string;
+}
+
 // Player functions
-export async function registerPlayer(data: Omit<Player, 'id' | 'join_date' | 'active' | 'is_admin' | 'created_at'>) {
+export async function registerPlayer(data: Omit<Player, 'id' | 'join_date' | 'active' | 'is_admin' | 'created_at'> & { role?: string }) {
+  // Ensure role is set to 'player' if not provided
+  const playerData = { ...data, role: (data as any).role || 'player' };
   const { data: player, error } = await supabase
     .from('players')
-    .insert([data])
+    .insert([playerData])
     .select()
     .single();
   if (error) throw error;
@@ -406,4 +442,64 @@ export async function votePoll(pollId: string, option: string) {
     .single();
   if (error) throw error;
   return data;
+}
+
+// Fixtures Functions
+export async function createFixture(fixtureData: Omit<Fixture, 'id' | 'created_at'>) {
+  const { data, error } = await supabase
+    .from('fixtures')
+    .insert([fixtureData])
+    .select()
+    .single();
+  if (error) throw error;
+  return data;
+}
+
+export async function listFixtures(): Promise<Fixture[]> {
+  const { data, error } = await supabase
+    .from('fixtures')
+    .select('*')
+    .order('fixture_date', { ascending: true });
+  if (error) throw error;
+  return data as Fixture[];
+}
+
+// Fees Functions
+export async function createFee(feeData: Omit<Fee, 'id' | 'created_at'>) {
+  const { data, error } = await supabase
+    .from('fees')
+    .insert([feeData])
+    .select()
+    .single();
+  if (error) throw error;
+  return data;
+}
+
+export async function listFees(): Promise<Fee[]> {
+  const { data, error } = await supabase
+    .from('fees')
+    .select('*, player:player_id(*)')
+    .order('due_date', { ascending: true });
+  if (error) throw error;
+  return data as Fee[];
+}
+
+// Expenses Functions
+export async function createExpense(expenseData: Omit<Expense, 'id' | 'created_at'>) {
+  const { data, error } = await supabase
+    .from('expenses')
+    .insert([expenseData])
+    .select()
+    .single();
+  if (error) throw error;
+  return data;
+}
+
+export async function listExpenses(): Promise<Expense[]> {
+  const { data, error } = await supabase
+    .from('expenses')
+    .select('*')
+    .order('expense_date', { ascending: false });
+  if (error) throw error;
+  return data as Expense[];
 }
