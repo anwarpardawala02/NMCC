@@ -19,7 +19,8 @@ import {
   useDisclosure,
   Checkbox
 } from "@chakra-ui/react";
-import { Calendar, MapPin, Clock } from "lucide-react";
+import { CalendarIcon, TimeIcon } from "@chakra-ui/icons";
+import { MdLocationOn } from 'react-icons/md';
 import { listMatches, getMatchAvailability, setMatchAvailability } from "../lib/db";
 import { useAuth } from "../hooks/useAuth";
 import type { Match, MatchAvailability } from "../lib/db";
@@ -128,19 +129,19 @@ export default function Matches() {
         
         <VStack align="start" spacing={2} fontSize="sm" color="gray.600">
           <HStack>
-            <Calendar size={16} />
+            <CalendarIcon boxSize={4} />
             <Text>{new Date(match.match_date).toLocaleDateString()}</Text>
           </HStack>
           
           {match.match_time && (
             <HStack>
-              <Clock size={16} />
+              <TimeIcon boxSize={4} />
               <Text>{match.match_time}</Text>
             </HStack>
           )}
           
           <HStack>
-            <MapPin size={16} />
+            <MdLocationOn size={16} />
             <Text>{match.venue}</Text>
           </HStack>
         </VStack>

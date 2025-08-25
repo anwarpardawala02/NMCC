@@ -14,43 +14,57 @@ import { RequireAdmin } from "../routes/RequireAdmin";
 import { TransactionForm } from "../components/TransactionForm";
 import { TransactionsTable } from "../components/TransactionsTable";
 import { SummaryCards } from "../components/SummaryCards";
-import { AdminBlogForm } from "../components/AdminBlogForm";
+// import { AdminBlogForm } from "../components/AdminBlogForm";
 import { AdminSponsorForm } from "../components/AdminSponsorForm";
 import { AdminStatsForm } from "../components/AdminStatsForm";
-import { AdminFeesForm } from "../components/AdminFeesForm";
+// Removed legacy AdminFeesForm; using Fees Matrix over club_fees
+import AdminFeesMatrix from "../components/AdminFeesMatrix";
 import { AdminExpensesForm } from "../components/AdminExpensesForm";
-import { listTransactions } from "../lib/db";
+import { listTransactions, listClubFees } from "../lib/db";
 
 function AdminDashboard() {
   const [transactions, setTransactions] = useState<any[]>([]);
+  const [clubFees, setClubFees] = useState<any[]>([]);
+  const [optimisticKPI, setOptimisticKPI] = useState<{revenue: number, expense: number, net: number} | null>(null);
+
   const [filters, setFilters] = useState<{ month: string; kind: string }>({
     month: new Date().toISOString().slice(0, 7),
     kind: ''
   });
 
+
   useEffect(() => {
-    loadTransactions();
+    loadData();
   }, [filters]);
 
-  async function loadTransactions() {
+  async function loadData() {
     try {
-      const data = await listTransactions(filters);
-      setTransactions(data);
+      const [txs, fees] = await Promise.all([
+        listTransactions(filters),
+        listClubFees()
+      ]);
+      setTransactions(txs);
+      setClubFees(fees);
+      setOptimisticKPI(null); // Reset optimistic KPI after real data loads
     } catch (error) {
-      console.error('Failed to load transactions:', error);
+      console.error('Failed to load data:', error);
     }
   }
 
-  const summaryData = transactions.reduce((acc: any, tx: any) => {
-    const amount = Number(tx.amount);
-    if (tx.kind === 'revenue') {
-      acc.revenue += amount;
-    } else {
-      acc.expense += amount;
+  // Sum revenue from transactions and paid club fees
+  const summaryData = optimisticKPI ?? (() => {
+    let revenue = 0, expense = 0;
+    for (const tx of transactions) {
+      const amount = Number(tx.amount);
+      if (tx.kind === 'revenue') revenue += amount;
+      else expense += amount;
     }
-    acc.net = acc.revenue - acc.expense;
-    return acc;
-  }, { revenue: 0, expense: 0, net: 0 });
+    // Add paid club fees (paid_on not null)
+    for (const fee of clubFees) {
+      if (fee.paid_on) revenue += Number(fee.amount);
+    }
+    return { revenue, expense, net: revenue - expense };
+  })();
 
   return (
     <Container maxW="container.xl" py={8}>
@@ -66,7 +80,6 @@ function AdminDashboard() {
             <Tab>Transactions</Tab>
             <Tab>Fees</Tab>
             <Tab>Expenses</Tab>
-            <Tab>Blog</Tab>
             <Tab>Sponsors</Tab>
             <Tab>Statistics</Tab>
           </TabList>
@@ -79,7 +92,9 @@ function AdminDashboard() {
                 
                 <Box p={6} borderWidth={1} borderRadius="lg" bg="white">
                   <Heading size="md" mb={4}>Add Transaction</Heading>
-                  <TransactionForm onSuccess={loadTransactions} />
+                  <TransactionForm onSuccess={() => {
+                    loadData();
+                  }} />
                 </Box>
 
                 <Box>
@@ -97,7 +112,9 @@ function AdminDashboard() {
 
             {/* Fees Tab */}
             <TabPanel>
-              <AdminFeesForm />
+              <VStack spacing={8} align="stretch">
+                <AdminFeesMatrix />
+              </VStack>
             </TabPanel>
 
             {/* Expenses Tab */}
@@ -105,10 +122,7 @@ function AdminDashboard() {
               <AdminExpensesForm />
             </TabPanel>
 
-            {/* Blog Tab */}
-            <TabPanel>
-              <AdminBlogForm />
-            </TabPanel>
+
 
             {/* Sponsors Tab */}
             <TabPanel>

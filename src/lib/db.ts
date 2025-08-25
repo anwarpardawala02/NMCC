@@ -201,6 +201,17 @@ export interface Fee {
   player?: Player;
 }
 
+// Club fees (normalized) mapping to public.club_fees
+export interface ClubFee {
+  id: string;
+  player_id: string;
+  fixture_id: string | null; // null for Squad Fee
+  category: 'Match Fee' | 'Squad Fee' | 'Nets' | 'Chai' | 'Other';
+  amount: number;
+  paid_on: string | null; // date ISO
+  notes?: string | null;
+}
+
 // Club expenses table mapping
 export interface Expense {
   id: string;
@@ -287,19 +298,27 @@ export async function listBlogs(publishedOnly = true): Promise<Blog[]> {
     query = query.eq('published', true);
   }
   
-  const { data, error } = await query;
-  if (error) throw error;
+  const { data, error }: any = await query;
+  if (error) {
+    if (error.code === 'PGRST205' || error.code === '42P01') return [] as Blog[];
+    throw error;
+  }
   return data as Blog[];
 }
 
 export async function getBlog(id: string): Promise<Blog> {
-  const { data, error } = await supabase
+  const { data, error }: any = await supabase
     .from('blogs')
     .select('*, author:players(id,full_name)')
     .eq('id', id)
     .single();
-  if (error) throw error;
-  return data;
+  if (error) {
+    if (error.code === 'PGRST205' || error.code === '42P01') {
+      throw new Error('Blog not found');
+    }
+    throw error;
+  }
+  return data as Blog;
 }
 
 export async function createBlog(blog: Omit<Blog, 'id' | 'created_at' | 'updated_at' | 'author'>) {
@@ -317,12 +336,15 @@ export async function createBlog(blog: Omit<Blog, 'id' | 'created_at' | 'updated
 
 // Sponsor functions
 export async function listSponsors(): Promise<Sponsor[]> {
-  const { data, error } = await supabase
+  const { data, error }: any = await supabase
     .from('sponsors')
     .select('*')
     .eq('active', true)
     .order('tier', { ascending: true });
-  if (error) throw error;
+  if (error) {
+    if (error.code === 'PGRST205' || error.code === '42P01') return [] as Sponsor[];
+    throw error;
+  }
   return data as Sponsor[];
 }
 
@@ -418,9 +440,17 @@ export async function listTransactions(filters: { month?: string; kind?: string 
     .order('occurred_on', { ascending: false });
 
   if (filters.month) {
+    // Use next month first day to avoid invalid dates
+    const [yStr, mStr] = filters.month.split('-');
+    const y = Number(yStr);
+    const m = Number(mStr);
+    const nextY = m === 12 ? y + 1 : y;
+    const nextM = m === 12 ? 1 : m + 1;
+    const mm = m.toString().padStart(2, '0');
+    const nextMm = nextM.toString().padStart(2, '0');
     query = query
-      .gte('occurred_on', `${filters.month}-01`)
-      .lt('occurred_on', `${filters.month}-32`);
+      .gte('occurred_on', `${yStr}-${mm}-01`)
+      .lt('occurred_on', `${nextY}-${nextMm}-01`);
   }
   if (filters.kind) {
     query = query.eq('kind', filters.kind);
@@ -485,8 +515,13 @@ export async function listPlayerStatistics(season?: string): Promise<PlayerStati
     query = query.eq('season', season);
   }
   
-  const { data, error } = await query;
-  if (error) throw error;
+  const { data, error }: any = await query;
+  if (error) {
+    if (error.code === '42P01' || error.code === '42703' || error.code === 'PGRST205') {
+      return [] as PlayerStatistics[];
+    }
+    throw error;
+  }
   return data as PlayerStatistics[];
 }
 
@@ -576,6 +611,89 @@ export async function listFees(): Promise<Fee[]> {
     .order('due_date', { ascending: true });
   if (error) throw error;
   return data as Fee[];
+}
+
+// Club Fees Functions (preferred)
+export async function listClubFees(): Promise<ClubFee[]> {
+  const { data, error } = await supabase
+    .from('club_fees')
+    .select('id, player_id, fixture_id, category, amount, paid_on, notes')
+    .order('paid_on', { ascending: true });
+  if (error) throw error;
+  return data as ClubFee[];
+}
+
+export async function upsertClubFee(input: Omit<ClubFee, 'id'> & { id?: string }) {
+  // Try update if id provided; otherwise, find existing by unique keys (player_id, fixture_id, category)
+  if (input.id) {
+    const { id, ...rest } = input;
+    const { data, error } = await supabase
+      .from('club_fees')
+      .update(rest)
+      .eq('id', id)
+      .select()
+      .single();
+    if (error) throw error;
+    return data as ClubFee;
+  }
+
+  // Find existing (encode category for safety)
+  // Normalize category value to match DB exactly
+  const normalizedCategory = (input.category || '').trim();
+  // Debug log for category value
+  if (typeof window !== 'undefined') {
+    // eslint-disable-next-line no-console
+    console.log('Querying club_fees with category:', JSON.stringify(normalizedCategory));
+  }
+  let query = supabase
+    .from('club_fees')
+    .select('id')
+    .eq('player_id', input.player_id)
+    .eq('category', normalizedCategory);
+  if (input.fixture_id === null || input.fixture_id === undefined) {
+    query = query.is('fixture_id', null);
+  } else {
+    query = query.eq('fixture_id', input.fixture_id);
+  }
+  let existing: { id: string } | null = null;
+  try {
+    const r = await query.single();
+    existing = r.data as { id: string } | null;
+  } catch {
+    existing = null;
+  }
+
+  if (existing?.id) {
+    const { data, error } = await supabase
+      .from('club_fees')
+      .update({
+        amount: input.amount,
+        paid_on: input.paid_on,
+        notes: input.notes ?? null,
+      })
+      .eq('id', existing.id)
+      .select()
+      .single();
+    if (error) throw error;
+    return data as ClubFee;
+  }
+
+  // Insert: ensure all required fields are present and valid
+  const insertObj = {
+    player_id: input.player_id,
+    fixture_id: input.fixture_id ?? null,
+    category: input.category,
+    amount: input.amount,
+    paid_on: input.paid_on ?? null,
+    notes: input.notes ?? null
+  };
+  const { data, error } = await supabase
+    .from('club_fees')
+    .insert([insertObj])
+    .select()
+    .single();
+  if (error) throw error;
+  return data as ClubFee;
 }
 
 // Expenses Functions

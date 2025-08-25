@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Button, Input, Box, useToast } from '@chakra-ui/react';
-import { Upload } from 'lucide-react';
+import { AttachmentIcon } from '@chakra-ui/icons';
 import { useAuth } from '../hooks/useAuth';
 import { uploadPhoto } from '../lib/photo';
 
@@ -58,7 +58,7 @@ export function PhotoUploader({ onSuccess }: PhotoUploaderProps) {
       <label htmlFor="photo-upload">
         <Button
           as="span"
-          leftIcon={<Upload />}
+          leftIcon={<AttachmentIcon />}
           isLoading={loading}
           loadingText="Uploading..."
           cursor="pointer"
