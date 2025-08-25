@@ -85,7 +85,7 @@ export default function Login() {
         <Alert status="info" variant="solid" borderRadius="md">
           <AlertIcon />
           <AlertTitle>Development Mode</AlertTitle>
-          <Text fontSize="sm">Just enter any username - no password needed. All users are granted admin access.</Text>
+          <Text fontSize="sm">Enter your username only — no password needed. Admin access is based on your role in the players table.</Text>
         </Alert>
 
         <Box p={6} borderWidth={1} borderRadius="lg" bg="white">

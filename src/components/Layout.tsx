@@ -26,7 +26,7 @@ import TeamMatches from "../pages/team/Matches";
 import TeamStatistics from "../pages/team/Statistics";
 
 export default function Layout() {
-  const { user, signOut } = useAuth();
+  const { user, signOut, isLoading } = useAuth();
   const navigate = useNavigate();
   const { isOpen, onOpen, onClose } = useDisclosure();
 
@@ -72,7 +72,7 @@ export default function Layout() {
                 </Link>
               </HStack>
             ))}
-            {user?.is_admin && (
+            {!isLoading && user?.is_admin && (
               <>
                 <HStack spacing={0} align="center">
                   <Box h="24px" borderLeft="2px solid #7ed957" mx={3} />
@@ -89,7 +89,7 @@ export default function Layout() {
               </>
             )}
             <Box h="24px" borderLeft="2px solid #7ed957" mx={3} />
-            {user ? (
+            {!isLoading && user ? (
               <HStack>
                 <Box 
                   px={2}
@@ -132,7 +132,7 @@ export default function Layout() {
           <DrawerHeader>Navigation</DrawerHeader>
           <DrawerBody>
             <VStack spacing={4} align="stretch">
-              {user && (
+              {!isLoading && user && (
                 <Box 
                   p={3}
                   bg={user.is_admin ? "green.100" : "blue.50"} 

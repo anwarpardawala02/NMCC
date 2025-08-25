@@ -48,32 +48,18 @@ export class AuthError extends Error {
 
 // Authentication service
 export class AuthService {
-  // Authenticate user against Supabase players table
+  // Authenticate user by login_name only (dev/no-password) and derive is_admin from role
   static async signIn(credentials: LoginCredentials): Promise<AuthPlayer> {
     console.log("Authenticating with login_name:", credentials.login_name);
 
     try {
-      // Call the database function to check credentials and get player data
-      type AuthResponse = {
-        id: string;
-        email: string;
-        full_name: string;
-        role: string;
-        login_name: string;
-        is_admin: boolean;
-      };
+  // Look up the player by login_name directly (no password)
 
-
-
-
-      const { data: authDataRaw, error: authError } = await supabase
-        .rpc('check_player_password', {
-          p_login_name: credentials.login_name,
-          p_password: credentials.password
-        })
+      const { data: authData, error: authError } = await supabase
+        .from('players')
+        .select('id, email, full_name, role, login_name')
+        .eq('login_name', credentials.login_name)
         .single();
-
-      const authData = authDataRaw as AuthResponse | null;
 
       if (authError) {
         console.error("Authentication failed:", authError);
@@ -85,13 +71,15 @@ export class AuthService {
       }
 
       // Create the authenticated player object
+      const role = (authData.role || '').toLowerCase();
+      const isAdmin = role === 'admin' || role === 'secretary' || role === 'treasurer';
       const authenticatedPlayer: AuthPlayer = {
         id: authData.id,
-        email: authData.email,
-        full_name: authData.full_name,
-        role: authData.role,
+        email: authData.email || '',
+        full_name: authData.full_name || '',
+        role,
         login_name: authData.login_name,
-        is_admin: authData.is_admin
+        is_admin: isAdmin
       };
 
       // Store the player in localStorage
@@ -292,13 +280,13 @@ export class AuthService {
 
   // Check if user is admin
   static isAdmin(): boolean {
-    const player = this.getCurrentPlayer();
-    return player?.role === 'admin';
+  const player = this.getCurrentPlayer();
+  return !!player?.is_admin;
   }
 
   // Check if user has specific role
   static hasRole(role: string): boolean {
-    const player = this.getCurrentPlayer();
-    return player?.role === role;
+  const player = this.getCurrentPlayer();
+  return (player?.role || '').toLowerCase() === role.toLowerCase();
   }
 }

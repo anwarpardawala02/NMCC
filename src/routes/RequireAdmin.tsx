@@ -1,15 +1,25 @@
 import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
+import { Box, Spinner } from '@chakra-ui/react';
 
 interface RequireAdminProps {
   children: React.ReactNode;
 }
 
 export function RequireAdmin({ children }: RequireAdminProps) {
-  const { user } = useAuth();
+  const { user, isLoading } = useAuth();
   const location = useLocation();
 
   console.log("RequireAdmin: Checking user:", user);
+
+  // Wait for auth to finish initializing
+  if (isLoading) {
+    return (
+      <Box py={8} textAlign="center">
+        <Spinner />
+      </Box>
+    );
+  }
 
   // Check if user exists and has admin privileges
   if (!user) {
