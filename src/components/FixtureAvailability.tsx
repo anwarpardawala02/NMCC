@@ -13,7 +13,7 @@ import {
   CardHeader,
   CardBody
 } from '@chakra-ui/react';
-import { useParams } from 'react-router-dom';
+import { useParams, Link as RouterLink } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import type { Fixture } from '../lib/db';
 import { getFixtureWithAvailability, setAvailability } from '../lib/db';
@@ -142,6 +142,17 @@ export function FixtureAvailability() {
                     Not Available: {fixture.not_available_count || 0}
                   </Badge>
                 </HStack>
+              </HStack>
+              <HStack>
+                <Button
+                  as={RouterLink}
+                  to={`/fixtures/${fixture.id}/availability-detail`}
+                  size="sm"
+                  variant="outline"
+                  colorScheme="blue"
+                >
+                  View responses
+                </Button>
               </HStack>
             </VStack>
           </CardBody>

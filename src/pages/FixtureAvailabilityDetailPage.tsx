@@ -20,7 +20,8 @@ import {
 } from '@chakra-ui/react';
 import { useParams } from 'react-router-dom';
 import type { Fixture, Availability } from '../lib/db';
-import { getFixtureWithAvailability, getFixtureAvailability } from '../lib/db';
+import { getFixtureWithAvailability } from '../lib/db';
+import { supabase } from '../lib/supabaseClient';
 
 export default function FixtureAvailabilityDetailPage() {
   const { fixtureId } = useParams<{ fixtureId: string }>();
@@ -43,9 +44,40 @@ export default function FixtureAvailabilityDetailPage() {
       const fixtureData = await getFixtureWithAvailability(fixtureId);
       setFixture(fixtureData);
       
-      // Load availability responses
-      const availabilityData = await getFixtureAvailability(fixtureId);
-      setAvailabilityList(availabilityData);
+      // Load availability responses via read-only RPC to avoid player RLS issues
+      const { data, error } = await supabase
+        .rpc('get_fixture_availability', { p_fixture_id: fixtureId });
+      if (error) throw error;
+        // Map RPC rows to Availability shape used by UI
+        let mapped: Availability[] = (data || []).map((row: any) => ({
+        id: row.id,
+        fixture_id: row.fixture_id,
+        player_id: row.player_id,
+        status: row.status,
+        responded_on: row.responded_on,
+        player: {
+          id: row.player_id,
+          full_name: row.player_full_name,
+          email: '',
+          phone: '',
+          join_date: '',
+          active: true,
+          is_admin: false,
+          created_at: '',
+          photo_url: row.player_photo_url,
+        } as any
+      }));
+        // Fallback: if RPC returns empty (or function not deployed), fetch plain availability rows
+        if (!mapped.length) {
+          const { data: plain } = await supabase
+            .from('availability')
+            .select('*')
+            .eq('fixture_id', fixtureId);
+          if (plain && Array.isArray(plain)) {
+            mapped = plain as Availability[];
+          }
+        }
+      setAvailabilityList(mapped);
     } catch (error) {
       console.error('Failed to load fixture details:', error);
     } finally {
@@ -73,6 +105,8 @@ export default function FixtureAvailabilityDetailPage() {
   // Group players by availability status
   const availablePlayers = availabilityList.filter(a => a.status === 'Available');
   const notAvailablePlayers = availabilityList.filter(a => a.status === 'Not Available');
+  const availableCount = (fixture as any)?.available_count ?? availablePlayers.length;
+  const notAvailableCount = (fixture as any)?.not_available_count ?? notAvailablePlayers.length;
 
   return (
     <Box maxW="1200px" mx="auto" p={[4, 6, 8]}>
@@ -123,7 +157,8 @@ export default function FixtureAvailabilityDetailPage() {
             <CardHeader bg="green.50">
               <HStack justify="space-between">
                 <Heading size="md" color="green.700">Available Players</Heading>
-                <Badge colorScheme="green" fontSize="md" px={2}>{availablePlayers.length}</Badge>
+                <Badge colorScheme="green" fontSize="md" px={2}>{availableCount}</Badge>
+                <Badge colorScheme="green" fontSize="md" px={2}>{availableCount}</Badge>
               </HStack>
             </CardHeader>
             <CardBody p={0}>
@@ -150,7 +185,7 @@ export default function FixtureAvailabilityDetailPage() {
                               src={item.player?.photo_url} 
                               bg="green.100"
                             />
-                            <Text>{item.player?.full_name}</Text>
+                            <Text>{item.player?.full_name || 'Unknown Player'}</Text>
                           </HStack>
                         </Td>
                         <Td>{new Date(item.responded_on).toLocaleDateString()}</Td>
@@ -166,7 +201,7 @@ export default function FixtureAvailabilityDetailPage() {
             <CardHeader bg="red.50">
               <HStack justify="space-between">
                 <Heading size="md" color="red.700">Not Available</Heading>
-                <Badge colorScheme="red" fontSize="md" px={2}>{notAvailablePlayers.length}</Badge>
+                <Badge colorScheme="red" fontSize="md" px={2}>{notAvailableCount}</Badge>
               </HStack>
             </CardHeader>
             <CardBody p={0}>
@@ -193,7 +228,7 @@ export default function FixtureAvailabilityDetailPage() {
                               src={item.player?.photo_url} 
                               bg="red.100"
                             />
-                            <Text>{item.player?.full_name}</Text>
+                            <Text>{item.player?.full_name || 'Unknown Player'}</Text>
                           </HStack>
                         </Td>
                         <Td>{new Date(item.responded_on).toLocaleDateString()}</Td>

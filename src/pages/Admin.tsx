@@ -8,21 +8,15 @@ import {
   Tab,
   TabPanel,
   Container,
-  VStack,
-  Button
+  VStack
 } from "@chakra-ui/react";
-import { CalendarIcon } from "@chakra-ui/icons";
-import { Link } from "react-router-dom";
 import { RequireAdmin } from "../routes/RequireAdmin";
 import { TransactionForm } from "../components/TransactionForm";
 import { TransactionsTable } from "../components/TransactionsTable";
 import { SummaryCards } from "../components/SummaryCards";
-import { AdminMatchForm } from "../components/AdminMatchForm";
 import { AdminBlogForm } from "../components/AdminBlogForm";
 import { AdminSponsorForm } from "../components/AdminSponsorForm";
-import { AdminPollForm } from "../components/AdminPollForm";
 import { AdminStatsForm } from "../components/AdminStatsForm";
-import { AdminFixtureForm } from "../components/AdminFixtureForm";
 import { AdminFeesForm } from "../components/AdminFeesForm";
 import { AdminExpensesForm } from "../components/AdminExpensesForm";
 import { listTransactions } from "../lib/db";
@@ -65,26 +59,15 @@ function AdminDashboard() {
           <Heading size="xl" color="green.600">
             Club Administration
           </Heading>
-          <Button 
-            as={Link} 
-            to="/fixtures/manage" 
-            colorScheme="blue" 
-            leftIcon={<CalendarIcon />}
-          >
-            Manage Fixtures
-          </Button>
         </Box>
 
         <Tabs colorScheme="green">
           <TabList>
             <Tab>Transactions</Tab>
-            <Tab>Fixtures</Tab>
             <Tab>Fees</Tab>
             <Tab>Expenses</Tab>
-            <Tab>Matches</Tab>
             <Tab>Blog</Tab>
             <Tab>Sponsors</Tab>
-            <Tab>Polls</Tab>
             <Tab>Statistics</Tab>
           </TabList>
 
@@ -112,11 +95,6 @@ function AdminDashboard() {
               </VStack>
             </TabPanel>
 
-            {/* Fixtures Tab */}
-            <TabPanel>
-              <AdminFixtureForm />
-            </TabPanel>
-
             {/* Fees Tab */}
             <TabPanel>
               <AdminFeesForm />
@@ -127,11 +105,6 @@ function AdminDashboard() {
               <AdminExpensesForm />
             </TabPanel>
 
-            {/* Matches Tab */}
-            <TabPanel>
-              <AdminMatchForm />
-            </TabPanel>
-
             {/* Blog Tab */}
             <TabPanel>
               <AdminBlogForm />
@@ -140,11 +113,6 @@ function AdminDashboard() {
             {/* Sponsors Tab */}
             <TabPanel>
               <AdminSponsorForm />
-            </TabPanel>
-
-            {/* Polls Tab */}
-            <TabPanel>
-              <AdminPollForm />
             </TabPanel>
 
             {/* Statistics Tab */}

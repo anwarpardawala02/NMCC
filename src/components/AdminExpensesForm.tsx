@@ -1,10 +1,10 @@
 import { useState, useEffect } from 'react';
-import { 
-  VStack, 
+import {
+  VStack,
   HStack,
-  FormControl, 
-  FormLabel, 
-  Input, 
+  FormControl,
+  FormLabel,
+  Input,
   Select,
   Button,
   useToast,
@@ -19,7 +19,7 @@ import {
   Badge,
   NumberInput,
   NumberInputField,
-  Textarea
+  Textarea,
 } from '@chakra-ui/react';
 import { createExpense, listExpenses } from '../lib/db';
 import type { Expense } from '../lib/db';
@@ -27,14 +27,9 @@ import type { Expense } from '../lib/db';
 export function AdminExpensesForm() {
   const [expenses, setExpenses] = useState<Expense[]>([]);
   const [loading, setLoading] = useState(false);
-  const [form, setForm] = useState({
-    expense_type: 'equipment' as 'equipment' | 'ground' | 'travel' | 'refreshments' | 'other',
-    amount: 0,
-    expense_date: '',
-    description: '',
-    paid_by: '',
-    reimbursed: false
-  });
+  const [form, setForm] = useState<{ category: Expense['category']; amount: number; date: string; description: string }>(
+    { category: 'Ground', amount: 0, date: '', description: '' }
+  );
   const toast = useToast();
 
   useEffect(() => {
@@ -53,29 +48,18 @@ export function AdminExpensesForm() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    
+
     try {
       await createExpense(form);
       toast({
         title: 'Expense Recorded',
         description: 'Expense has been successfully recorded',
-        status: 'success'
+        status: 'success',
       });
-      setForm({
-        expense_type: 'equipment',
-        amount: 0,
-        expense_date: '',
-        description: '',
-        paid_by: '',
-        reimbursed: false
-      });
-      loadExpenses();
+      setForm({ category: 'Ground', amount: 0, date: '', description: '' });
+      await loadExpenses();
     } catch (error: any) {
-      toast({
-        title: 'Error',
-        description: error.message,
-        status: 'error'
-      });
+      toast({ title: 'Error', description: error.message, status: 'error' });
     } finally {
       setLoading(false);
     }
@@ -89,16 +73,15 @@ export function AdminExpensesForm() {
           <VStack spacing={4}>
             <HStack spacing={4} w="full">
               <FormControl isRequired>
-                <FormLabel>Expense Type</FormLabel>
+                <FormLabel>Category</FormLabel>
                 <Select
-                  value={form.expense_type}
-                  onChange={e => setForm(prev => ({ ...prev, expense_type: e.target.value as any }))}
+                  value={form.category}
+                  onChange={(e) => setForm((prev) => ({ ...prev, category: e.target.value as Expense['category'] }))}
                 >
-                  <option value="equipment">Equipment</option>
-                  <option value="ground">Ground Maintenance</option>
-                  <option value="travel">Travel</option>
-                  <option value="refreshments">Refreshments</option>
-                  <option value="other">Other</option>
+                  <option value="Ground">Ground</option>
+                  <option value="Lunch">Lunch</option>
+                  <option value="Chai">Chai</option>
+                  <option value="Other">Other</option>
                 </Select>
               </FormControl>
 
@@ -107,7 +90,7 @@ export function AdminExpensesForm() {
                 <NumberInput min={0}>
                   <NumberInputField
                     value={form.amount}
-                    onChange={e => setForm(prev => ({ ...prev, amount: Number(e.target.value) }))}
+                    onChange={(e) => setForm((prev) => ({ ...prev, amount: Number(e.target.value) }))}
                   />
                 </NumberInput>
               </FormControl>
@@ -115,51 +98,25 @@ export function AdminExpensesForm() {
 
             <HStack spacing={4} w="full">
               <FormControl isRequired>
-                <FormLabel>Expense Date</FormLabel>
+                <FormLabel>Date</FormLabel>
                 <Input
                   type="date"
-                  value={form.expense_date}
-                  onChange={e => setForm(prev => ({ ...prev, expense_date: e.target.value }))}
+                  value={form.date}
+                  onChange={(e) => setForm((prev) => ({ ...prev, date: e.target.value }))}
                 />
               </FormControl>
 
-              <FormControl isRequired>
-                <FormLabel>Paid By</FormLabel>
-                <Input
-                  value={form.paid_by}
-                  onChange={e => setForm(prev => ({ ...prev, paid_by: e.target.value }))}
-                  placeholder="Name of person who paid"
+              <FormControl>
+                <FormLabel>Description</FormLabel>
+                <Textarea
+                  value={form.description}
+                  onChange={(e) => setForm((prev) => ({ ...prev, description: e.target.value }))}
+                  placeholder="Detailed description of the expense"
                 />
               </FormControl>
             </HStack>
 
-            <FormControl isRequired>
-              <FormLabel>Description</FormLabel>
-              <Textarea
-                value={form.description}
-                onChange={e => setForm(prev => ({ ...prev, description: e.target.value }))}
-                placeholder="Detailed description of the expense"
-              />
-            </FormControl>
-
-            <FormControl>
-              <FormLabel>Reimbursed</FormLabel>
-              <Select
-                value={form.reimbursed ? "true" : "false"}
-                onChange={e => setForm(prev => ({ ...prev, reimbursed: e.target.value === "true" }))}
-              >
-                <option value="false">No</option>
-                <option value="true">Yes</option>
-              </Select>
-            </FormControl>
-
-            <Button
-              type="submit"
-              colorScheme="green"
-              isLoading={loading}
-              loadingText="Recording..."
-              w="full"
-            >
+            <Button type="submit" colorScheme="green" isLoading={loading} loadingText="Recording..." w="full">
               Record Expense
             </Button>
           </VStack>
@@ -172,31 +129,21 @@ export function AdminExpensesForm() {
           <Table variant="simple" bg="white" borderRadius="lg">
             <Thead>
               <Tr>
-                <Th>Type</Th>
+                <Th>Category</Th>
                 <Th>Amount</Th>
                 <Th>Date</Th>
-                <Th>Paid By</Th>
                 <Th>Description</Th>
-                <Th>Status</Th>
               </Tr>
             </Thead>
             <Tbody>
-              {expenses.map(expense => (
+              {expenses.map((expense) => (
                 <Tr key={expense.id}>
                   <Td>
-                    <Badge colorScheme="blue" textTransform="capitalize">
-                      {expense.expense_type}
-                    </Badge>
+                    <Badge colorScheme="blue">{expense.category}</Badge>
                   </Td>
                   <Td>£{expense.amount.toFixed(2)}</Td>
-                  <Td>{new Date(expense.expense_date).toLocaleDateString()}</Td>
-                  <Td>{expense.paid_by}</Td>
+                  <Td>{new Date(expense.date).toLocaleDateString()}</Td>
                   <Td>{expense.description}</Td>
-                  <Td>
-                    <Badge colorScheme={expense.reimbursed ? "green" : "red"}>
-                      {expense.reimbursed ? "REIMBURSED" : "PENDING"}
-                    </Badge>
-                  </Td>
                 </Tr>
               ))}
             </Tbody>

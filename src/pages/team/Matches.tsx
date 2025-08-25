@@ -1,15 +1,26 @@
 import { useEffect, useState } from "react";
-import { Box, Heading, Text, Table, Thead, Tbody, Tr, Th, Td, Badge, VStack, Button, HStack } from "@chakra-ui/react";
+import { Box, Heading, Text, Table, Thead, Tbody, Tr, Th, Td, Badge, VStack, Button, HStack, useDisclosure, Modal, ModalOverlay, ModalContent, ModalHeader, ModalCloseButton, ModalBody, ModalFooter, FormControl, FormLabel, Input, Select, Textarea, Menu, MenuButton, MenuList, MenuItem, useToast } from "@chakra-ui/react";
 import { Link as RouterLink } from "react-router-dom";
 import { ExternalLinkIcon } from "@chakra-ui/icons";
 import type { Fixture } from "../../lib/db";
-import { listFixtures, getFixtureWithAvailability } from "../../lib/db";
+import { listFixtures, getFixtureWithAvailability, createFixture, updateFixture, deleteFixture } from "../../lib/db";
 import { useAuth } from "../../hooks/useAuth";
 
 export default function TeamMatches() {
   const [fixtures, setFixtures] = useState<Array<Fixture & { available_count?: number; not_available_count?: number }>>([]);
   const [loading, setLoading] = useState(true);
   const { user } = useAuth();
+  const toast = useToast();
+  const { isOpen, onOpen, onClose } = useDisclosure();
+  const [editing, setEditing] = useState<Fixture | null>(null);
+  const [form, setForm] = useState<Omit<Fixture, 'id' | 'created_at'>>({
+    opponent: '',
+    fixture_date: new Date().toISOString().slice(0, 10),
+    venue: '',
+    home_away: 'home',
+    status: 'scheduled',
+    notes: ''
+  });
   
   // Debug user status
   useEffect(() => {
@@ -41,6 +52,65 @@ export default function TeamMatches() {
     } finally {
       setLoading(false);
     }
+  }
+
+  function openCreate() {
+    setEditing(null);
+    setForm({
+      opponent: '',
+      fixture_date: new Date().toISOString().slice(0, 10),
+      venue: '',
+      home_away: 'home',
+      status: 'scheduled',
+      notes: ''
+    });
+    onOpen();
+  }
+
+  function openEdit(f: Fixture) {
+    setEditing(f);
+    setForm({
+      opponent: f.opponent,
+      fixture_date: f.fixture_date,
+      venue: f.venue,
+      home_away: f.home_away,
+      status: f.status,
+      notes: f.notes || ''
+    });
+    onOpen();
+  }
+
+  async function handleSave() {
+    try {
+      if (editing) {
+        await updateFixture(editing.id, form);
+        toast({ title: 'Fixture updated', status: 'success' });
+      } else {
+        await createFixture(form);
+        toast({ title: 'Fixture created', status: 'success' });
+      }
+      onClose();
+      await loadFixtures();
+    } catch (e: any) {
+      toast({ title: 'Error', description: e.message || 'Failed to save fixture', status: 'error' });
+    }
+  }
+
+  async function handleDelete(f: Fixture) {
+    if (!confirm('Delete this fixture?')) return;
+    try {
+      await deleteFixture(f.id);
+      toast({ title: 'Fixture deleted', status: 'success' });
+      await loadFixtures();
+    } catch (e: any) {
+      toast({ title: 'Error', description: e.message || 'Failed to delete', status: 'error' });
+    }
+  }
+
+  function copyLink(kind: 'respond' | 'view', id: string) {
+    const url = kind === 'respond' ? `${window.location.origin}/fixtures/${id}/availability` : `${window.location.origin}/fixtures/${id}/availability-detail`;
+    navigator.clipboard.writeText(url);
+    toast({ title: 'Link copied', description: url, status: 'info' });
   }
 
   // Function to format date nicely
@@ -77,25 +147,11 @@ export default function TeamMatches() {
         <Text color="gray.600">Recent and upcoming matches for Northolt Manor Cricket Club</Text>
         
         <HStack mt={4} spacing={4} justify="center">
-          {/* Always visible button for testing */}
-          <Button 
-            colorScheme="blue"
-            size="sm"
-            onClick={() => console.log("Clicked test button, user:", user)}
-          >
-            Test Button (Always Visible)
-          </Button>
-          
-          {/* Temporarily showing for all users for testing */}
-          <Button 
-            as={RouterLink}
-            to="/fixtures/manage"
-            colorScheme="green"
-            size="sm"
-            rightIcon={<ExternalLinkIcon />}
-          >
-            Manage Fixtures (Admin Only)
-          </Button>
+          {user?.is_admin && (
+            <Button colorScheme="green" size="sm" onClick={openCreate}>
+              New Fixture
+            </Button>
+          )}
         </HStack>
       </Box>
 
@@ -120,6 +176,7 @@ export default function TeamMatches() {
                   <Th color="white">Ground</Th>
                   <Th color="white">Home/Away</Th>
                   <Th color="white">Availability</Th>
+                  <Th color="white">Actions</Th>
                 </Tr>
               </Thead>
               <Tbody>
@@ -135,14 +192,25 @@ export default function TeamMatches() {
                     </Td>
                     <Td>
                       <HStack spacing={3}>
-                        <Box>
-                          <Badge mr={2} colorScheme="green">
-                            Available: {fixture.available_count || 0}
-                          </Badge>
-                          <Badge colorScheme="red">
-                            Not Available: {fixture.not_available_count || 0}
-                          </Badge>
-                        </Box>
+                        <Badge mr={2} colorScheme="green">
+                          Available: {fixture.available_count || 0}
+                        </Badge>
+                        <Badge colorScheme="red">
+                          Not Available: {fixture.not_available_count || 0}
+                        </Badge>
+                      </HStack>
+                    </Td>
+                    <Td>
+                      <HStack spacing={2}>
+                        <Button
+                          as={RouterLink}
+                          to={`/fixtures/${fixture.id}/availability-detail`}
+                          size="xs"
+                          variant="outline"
+                          rightIcon={<ExternalLinkIcon />}
+                        >
+                          View
+                        </Button>
                         {user && (
                           <Button
                             as={RouterLink}
@@ -153,6 +221,19 @@ export default function TeamMatches() {
                           >
                             Respond
                           </Button>
+                        )}
+                        {user?.is_admin && (
+                          <Menu>
+                            <MenuButton as={Button} size="xs" variant="outline">
+                              Actions
+                            </MenuButton>
+                            <MenuList>
+                              <MenuItem onClick={() => openEdit(fixture)}>Edit</MenuItem>
+                              <MenuItem onClick={() => handleDelete(fixture)}>Delete</MenuItem>
+                              <MenuItem onClick={() => copyLink('respond', fixture.id)}>Copy Respond Link</MenuItem>
+                              <MenuItem onClick={() => copyLink('view', fixture.id)}>Copy View Link</MenuItem>
+                            </MenuList>
+                          </Menu>
                         )}
                       </HStack>
                     </Td>
@@ -184,6 +265,7 @@ export default function TeamMatches() {
                   <Th color="white">Opponent</Th>
                   <Th color="white">Ground</Th>
                   <Th color="white">Home/Away</Th>
+                  <Th color="white">Actions</Th>
                 </Tr>
               </Thead>
               <Tbody>
@@ -197,6 +279,32 @@ export default function TeamMatches() {
                         {fixture.home_away.toUpperCase()}
                       </Badge>
                     </Td>
+                    <Td>
+                      <HStack spacing={2}>
+                        <Button
+                          as={RouterLink}
+                          to={`/fixtures/${fixture.id}/availability-detail`}
+                          size="xs"
+                          variant="outline"
+                          rightIcon={<ExternalLinkIcon />}
+                        >
+                          View
+                        </Button>
+                        {user?.is_admin && (
+                          <Menu>
+                            <MenuButton as={Button} size="xs" variant="outline">
+                              Actions
+                            </MenuButton>
+                            <MenuList>
+                              <MenuItem onClick={() => openEdit(fixture)}>Edit</MenuItem>
+                              <MenuItem onClick={() => handleDelete(fixture)}>Delete</MenuItem>
+                              <MenuItem onClick={() => copyLink('respond', fixture.id)}>Copy Respond Link</MenuItem>
+                              <MenuItem onClick={() => copyLink('view', fixture.id)}>Copy View Link</MenuItem>
+                            </MenuList>
+                          </Menu>
+                        )}
+                      </HStack>
+                    </Td>
                   </Tr>
                 ))}
               </Tbody>
@@ -204,6 +312,46 @@ export default function TeamMatches() {
           </Box>
         )}
       </Box>
+
+      {/* Create/Edit Fixture Modal */}
+      <Modal isOpen={isOpen} onClose={onClose} size="lg">
+        <ModalOverlay />
+        <ModalContent>
+          <ModalHeader>{editing ? 'Edit Fixture' : 'New Fixture'}</ModalHeader>
+          <ModalCloseButton />
+          <ModalBody>
+            <VStack spacing={4} align="stretch">
+              <FormControl isRequired>
+                <FormLabel>Opponent</FormLabel>
+                <Input value={form.opponent} onChange={(e) => setForm({ ...form, opponent: e.target.value })} />
+              </FormControl>
+              <FormControl isRequired>
+                <FormLabel>Date</FormLabel>
+                <Input type="date" value={form.fixture_date} onChange={(e) => setForm({ ...form, fixture_date: e.target.value })} />
+              </FormControl>
+              <FormControl isRequired>
+                <FormLabel>Ground</FormLabel>
+                <Input value={form.venue} onChange={(e) => setForm({ ...form, venue: e.target.value })} />
+              </FormControl>
+              <FormControl isRequired>
+                <FormLabel>Home/Away</FormLabel>
+                <Select value={form.home_away} onChange={(e) => setForm({ ...form, home_away: e.target.value as 'home' | 'away' })}>
+                  <option value="home">Home</option>
+                  <option value="away">Away</option>
+                </Select>
+              </FormControl>
+              <FormControl>
+                <FormLabel>Notes</FormLabel>
+                <Textarea value={form.notes || ''} onChange={(e) => setForm({ ...form, notes: e.target.value })} />
+              </FormControl>
+            </VStack>
+          </ModalBody>
+          <ModalFooter>
+            <Button mr={3} onClick={onClose}>Cancel</Button>
+            <Button colorScheme="blue" onClick={handleSave}>{editing ? 'Update' : 'Create'}</Button>
+          </ModalFooter>
+        </ModalContent>
+      </Modal>
     </VStack>
   );
 }

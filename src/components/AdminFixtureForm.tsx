@@ -182,6 +182,7 @@ export function AdminFixtureForm({ onSuccess }: AdminFixtureFormProps) {
                 <Th>Venue</Th>
                 <Th>Home/Away</Th>
                 <Th>Notes</Th>
+                <Th>Share Link</Th>
               </Tr>
             </Thead>
             <Tbody>
@@ -196,6 +197,17 @@ export function AdminFixtureForm({ onSuccess }: AdminFixtureFormProps) {
                     </Badge>
                   </Td>
                   <Td>{fixture.notes}</Td>
+                  <Td>
+                    <Button
+                      as={RouterLink}
+                      to={`/fixtures/${fixture.id}/availability`}
+                      size="xs"
+                      variant="outline"
+                      rightIcon={<ExternalLinkIcon />}
+                    >
+                      Open
+                    </Button>
+                  </Td>
                 </Tr>
               ))}
             </Tbody>

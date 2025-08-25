@@ -201,15 +201,13 @@ export interface Fee {
   player?: Player;
 }
 
+// Club expenses table mapping
 export interface Expense {
   id: string;
-  expense_type: 'equipment' | 'ground' | 'travel' | 'refreshments' | 'other';
+  date: string; // expense date
+  description?: string;
   amount: number;
-  expense_date: string;
-  description: string;
-  paid_by: string;
-  reimbursed: boolean;
-  created_at: string;
+  category: 'Ground' | 'Lunch' | 'Chai' | 'Other';
 }
 
 // Player functions
@@ -581,21 +579,21 @@ export async function listFees(): Promise<Fee[]> {
 }
 
 // Expenses Functions
-export async function createExpense(expenseData: Omit<Expense, 'id' | 'created_at'>) {
+export async function createExpense(expenseData: Omit<Expense, 'id'>) {
   const { data, error } = await supabase
-    .from('expenses')
+    .from('club_expenses')
     .insert([expenseData])
     .select()
     .single();
   if (error) throw error;
-  return data;
+  return data as Expense;
 }
 
 export async function listExpenses(): Promise<Expense[]> {
   const { data, error } = await supabase
-    .from('expenses')
-    .select('*')
-    .order('expense_date', { ascending: false });
+    .from('club_expenses')
+    .select('id, date, description, amount, category')
+    .order('date', { ascending: false });
   if (error) throw error;
   return data as Expense[];
 }
@@ -604,11 +602,14 @@ export async function listExpenses(): Promise<Expense[]> {
 export async function setAvailability(fixtureId: string, playerId: string, status: 'Available' | 'Not Available') {
   const { data, error } = await supabase
     .from('availability')
-    .upsert({
-      fixture_id: fixtureId,
-      player_id: playerId,
-      status,
-    })
+    .upsert(
+      {
+        fixture_id: fixtureId,
+        player_id: playerId,
+        status,
+      },
+      { onConflict: 'fixture_id,player_id' }
+    )
     .select()
     .single();
   if (error) throw error;
@@ -618,7 +619,7 @@ export async function setAvailability(fixtureId: string, playerId: string, statu
 export async function getFixtureAvailability(fixtureId: string): Promise<Availability[]> {
   const { data, error } = await supabase
     .from('availability')
-    .select('*, player:players(id, full_name, photo_url)')
+  .select('*, player:players(id, full_name, photo_url)')
     .eq('fixture_id', fixtureId);
   if (error) throw error;
   return data as Availability[];
@@ -634,10 +635,10 @@ export async function getPlayerAvailability(playerId: string): Promise<Availabil
 }
 
 export async function getFixtureWithAvailability(fixtureId: string): Promise<Fixture & { available_count: number; not_available_count: number }> {
-  // Get fixture details
-  const { data: fixture, error: fixtureError } = await supabase
+  // Get fixture details (select specific columns and map)
+  const { data: fixtureRow, error: fixtureError } = await supabase
     .from('fixtures')
-    .select('*')
+    .select('id, date, opponent, home_away, ground, notes')
     .eq('id', fixtureId)
     .single();
   
@@ -660,8 +661,9 @@ export async function getFixtureWithAvailability(fixtureId: string): Promise<Fix
     
   if (notAvailableError) throw notAvailableError;
   
+  const mapped = mapFixtureRowToFixture(fixtureRow as FixtureRow);
   return {
-    ...fixture,
+    ...mapped,
     available_count: availablePlayers.length,
     not_available_count: notAvailablePlayers.length
   };

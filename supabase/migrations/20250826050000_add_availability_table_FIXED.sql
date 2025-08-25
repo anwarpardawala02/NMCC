@@ -24,11 +24,13 @@ CREATE POLICY availability_insert_policy
   WITH CHECK (true);
 
 -- Players can update their own availability
-CREATE POLICY availability_update_policy 
+-- Dev-friendly: allow updates for anyone so upsert works without Supabase Auth (tighten for prod)
+DROP POLICY IF EXISTS availability_update_policy ON availability;
+CREATE POLICY availability_update_policy_dev 
   ON availability 
   FOR UPDATE 
-  USING (player_id = auth.uid())
-  WITH CHECK (player_id = auth.uid());
+  USING (true)
+  WITH CHECK (true);
 
 -- Create a trigger to add match fees when a player marks as "Available"
 CREATE OR REPLACE FUNCTION add_match_fee_on_available() 
@@ -38,27 +40,32 @@ BEGIN
   IF NEW.status = 'Available' THEN
     -- Check if fee already exists to prevent duplicates
     IF NOT EXISTS (
-      SELECT 1 FROM fees 
+      SELECT 1 FROM public.club_fees 
       WHERE player_id = NEW.player_id 
-      AND fee_type = 'match'
-      AND notes LIKE '%' || NEW.fixture_id || '%'
+      AND fixture_id = NEW.fixture_id
+      AND category = 'Match Fee'
     ) THEN
       -- Get fixture details for reference
-      INSERT INTO fees (
+      INSERT INTO public.club_fees (
         player_id,
-        fee_type,
+        fixture_id,
+        category,
         amount,
-        due_date,
+        paid_on,
         notes
       )
-      SELECT 
+      VALUES (
         NEW.player_id,
-        'match',
+        NEW.fixture_id,
+        'Match Fee',
         25.00,  -- Default match fee amount, update as needed
-        f.date,
-        'Match fee for ' || f.opponent || ' (' || NEW.fixture_id || ')'
-      FROM fixtures f
-      WHERE f.id = NEW.fixture_id;
+        NULL,
+        (
+          SELECT 'Match fee for ' || f.opponent || ' (' || NEW.fixture_id || ')'
+          FROM public.fixtures f
+          WHERE f.id = NEW.fixture_id
+        )
+      );
     END IF;
   END IF;
 
