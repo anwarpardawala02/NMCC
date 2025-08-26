@@ -10,6 +10,7 @@ export interface Player {
   active: boolean;
   is_admin: boolean;
   role?: 'player' | 'secretary' | 'treasurer' | 'admin';
+  skill?: 'batsman' | 'bowler' | 'all-rounder';
   created_at: string;
 }
 
@@ -107,19 +108,37 @@ export interface MatchAvailability {
 }
 
 export interface PlayerStatistics {
-  id: string;
+  id: number;
   player_id: string;
+  player_name: string;
   season: string;
-  matches_played: number;
-  runs_scored: number;
-  balls_faced: number;
-  fours: number;
-  sixes: number;
-  wickets_taken: number;
-  overs_bowled: number;
-  runs_conceded: number;
-  catches: number;
+  games: number;
+  inns: number;
+  not_outs: number;
+  runs: number;
+  high_score: number;
+  high_score_not_out: boolean;
+  avg: number;
+  fifties: number;
+  hundreds: number;
+  strike_rate: number;
+  overs: number;
+  maidens: number;
+  bowling_runs: number;
+  wickets: number;
+  best_bowling: string;
+  five_wicket_haul: number;
+  economy_rate: number;
+  bowling_strike_rate: number;
+  bowling_average: number;
+  wk_catches: number;
   stumpings: number;
+  total_wk_wickets: number;
+  fielding_catches: number;
+  run_outs: number;
+  total_fielding_wickets: number;
+  total_catches: number;
+  total_victims: number;
   player?: Player;
 }
 

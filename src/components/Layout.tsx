@@ -35,8 +35,8 @@ export default function Layout() {
 
   const navItems = [
     { label: 'Home', path: '/' },
-    { label: 'Squad Room', path: '/team' },
     { label: 'Register', path: '/register' },
+    { label: 'Squad Room', path: '/team' },
     { label: 'Club Media Hub', path: '/gallery' },
     { label: 'Sponsors', path: '/sponsors' },
   ];
