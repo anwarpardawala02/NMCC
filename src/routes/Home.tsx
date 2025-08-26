@@ -41,7 +41,7 @@ Our aim is to build a team based on the following qualities which can make us a 
       </Box>
 
       <Box mb={8}>
-        <Heading size="md" mb={4}>Gallery</Heading>
+  <Heading size="md" mb={4}>Club Media Hub</Heading>
         {user && (
           <Box mb={4}>
             <PhotoUploader onSuccess={loadPhotos} />

@@ -148,10 +148,10 @@ export default function Home() {
         </Box>
       )}
 
-      {/* Photo Gallery Preview */}
+  {/* Club Media Hub Preview */}
       {photos.length > 0 && (
         <Box>
-          <Heading size="lg" mb={6}>Gallery</Heading>
+          <Heading size="lg" mb={6}>Club Media Hub</Heading>
           <SimpleGrid columns={[2, 3, 6]} spacing={4}>
             {photos.map((photo) => (
               <Box key={photo.id} borderRadius="lg" overflow="hidden">
@@ -169,7 +169,7 @@ export default function Home() {
           </SimpleGrid>
           <Box textAlign="center" mt={6}>
             <Button as={RouterLink} to="/gallery" variant="outline">
-              View Full Gallery
+              View Club Media Hub
             </Button>
           </Box>
         </Box>
