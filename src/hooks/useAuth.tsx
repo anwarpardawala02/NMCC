@@ -11,8 +11,14 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType>({
   user: null,
-  signIn: async () => { throw new Error('Not implemented'); },
-  signOut: async () => {},
+  signIn: async (credentials) => {
+    console.warn('AuthContext not initialized. Falling back to direct AuthService.signIn.');
+    return AuthService.signIn(credentials);
+  },
+  signOut: async () => {
+    console.warn('AuthContext not initialized. Falling back to direct AuthService.signOut.');
+    return AuthService.signOut();
+  },
   isLoading: false
 });
 
@@ -22,19 +28,26 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   
   // Check if user was previously logged in
   useEffect(() => {
+    console.log("useAuth: Checking for previously logged in user");
     const currentUser = AuthService.getCurrentPlayer();
+    
+    console.log("useAuth: Current user from storage:", currentUser);
     setUser(currentUser);
     setIsLoading(false);
   }, []);
 
   // Sign in function
   const signIn = async (credentials: LoginCredentials): Promise<AuthPlayer> => {
+    console.log("useAuth: signIn called with credentials:", credentials);
     try {
       setIsLoading(true);
+      console.log("useAuth: Calling AuthService.signIn");
       const player = await AuthService.signIn(credentials);
+      console.log("useAuth: Got player from AuthService:", player);
       setUser(player);
       return player;
     } catch (error) {
+      console.error("useAuth: Error during signIn:", error);
       throw error;
     } finally {
       setIsLoading(false);

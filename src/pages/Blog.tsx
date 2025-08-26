@@ -12,9 +12,12 @@ import {
 import { Link as RouterLink } from "react-router-dom";
 import { listBlogs } from "../lib/db";
 import type { Blog } from "../lib/db";
+import { useAuth } from "../hooks/useAuth";
+import { AdminBlogForm } from "../components/AdminBlogForm";
 
 export default function Blog() {
   const [blogs, setBlogs] = useState<Blog[]>([]);
+  const { user } = useAuth();
 
   useEffect(() => {
     loadBlogs();
@@ -40,6 +43,12 @@ export default function Blog() {
             Stay up to date with the latest news from Northolt Manor Cricket Club
           </Text>
         </Box>
+
+        {user?.is_admin && (
+          <Box mb={8}>
+            <AdminBlogForm />
+          </Box>
+        )}
 
         {blogs.length === 0 ? (
           <Box textAlign="center" py={12}>

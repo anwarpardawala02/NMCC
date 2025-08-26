@@ -16,7 +16,7 @@ import {
   ModalCloseButton,
   useDisclosure
 } from "@chakra-ui/react";
-import { Upload } from "lucide-react";
+import { AttachmentIcon } from "@chakra-ui/icons";
 import { listPhotos, uploadPhoto } from "../lib/db";
 import { useAuth } from "../hooks/useAuth";
 import type { Photo } from "../lib/db";
@@ -104,7 +104,7 @@ export default function Gallery() {
               <label htmlFor="photo-upload">
                 <Button
                   as="span"
-                  leftIcon={<Upload />}
+                  leftIcon={<AttachmentIcon />}
                   isLoading={uploading}
                   loadingText="Uploading..."
                   cursor="pointer"

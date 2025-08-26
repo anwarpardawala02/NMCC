@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useParams, Link as RouterLink } from "react-router-dom";
 import { Box, Heading, Image, Container, Badge, Button, VStack, Spinner } from "@chakra-ui/react";
-import { ArrowLeft } from "lucide-react";
+import { ArrowBackIcon } from "@chakra-ui/icons";
 import { getBlog } from "../lib/db";
 import type { Blog } from "../lib/db";
 
@@ -42,7 +42,7 @@ export default function BlogPost() {
       <Container maxW="container.lg" py={8}>
         <VStack spacing={4}>
           <Heading size="lg" color="red.500">Blog post not found</Heading>
-          <Button as={RouterLink} to="/blog" leftIcon={<ArrowLeft />}>
+          <Button as={RouterLink} to="/blog" leftIcon={<ArrowBackIcon />}>
             Back to Blog
           </Button>
         </VStack>
@@ -56,7 +56,7 @@ export default function BlogPost() {
         <Button 
           as={RouterLink} 
           to="/blog" 
-          leftIcon={<ArrowLeft />}
+          leftIcon={<ArrowBackIcon />}
           variant="ghost"
           alignSelf="start"
         >

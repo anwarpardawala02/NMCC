@@ -10,7 +10,7 @@ import {
   Container,
   Badge
 } from "@chakra-ui/react";
-import { ExternalLink } from "lucide-react";
+import { ExternalLinkIcon } from "@chakra-ui/icons";
 import { listSponsors } from "../lib/db";
 import type { Sponsor } from "../lib/db";
 
@@ -132,7 +132,7 @@ export default function Sponsors() {
                       fontWeight="medium"
                       _hover={{ textDecoration: 'underline' }}
                     >
-                      Visit Website <ExternalLink size={16} style={{ display: 'inline', marginLeft: '4px' }} />
+                      Visit Website <ExternalLinkIcon boxSize={4} style={{ display: 'inline', marginLeft: '4px' }} />
                     </Link>
                   )}
                 </VStack>

@@ -5,9 +5,9 @@ export interface AuthPlayer {
   id: string;
   email: string;
   full_name: string;
-  is_admin: boolean;
   role: string;
   login_name: string;
+  is_admin: boolean;
 }
 
 export interface LoginCredentials {
@@ -48,42 +48,74 @@ export class AuthError extends Error {
 
 // Authentication service
 export class AuthService {
-  // Sign in with login_name and password
-  static async signIn({ login_name, password }: LoginCredentials): Promise<AuthPlayer> {
+  // Authenticate user by login_name only (dev/no-password) and derive is_admin from role
+  static async signIn(credentials: LoginCredentials): Promise<AuthPlayer> {
+    console.log("Authenticating with login_name:", credentials.login_name);
+
     try {
-      const { data, error } = await supabase
-        .rpc('check_player_password', {
-          p_login_name: login_name,
-          p_password: password
-        });
+  // Look up the player by login_name directly (no password)
 
-      if (error) throw new AuthError(error.message);
-      if (!data || data.length === 0) throw new AuthError('Invalid username or password');
+      const { data: authData, error: authError } = await supabase
+        .from('players')
+        .select('id, email, full_name, role, login_name')
+        .eq('login_name', credentials.login_name)
+        .single();
 
-      // Store player data in local storage
-      const player = data[0] as AuthPlayer;
-      localStorage.setItem('cricket_club_player', JSON.stringify(player));
-      
-      return player;
-    } catch (error: any) {
-      console.error('Sign in error:', error);
-      throw new AuthError(error.message || 'Failed to sign in');
+      if (authError) {
+        console.error("Authentication failed:", authError);
+        throw new AuthError("Invalid username or password.");
+      }
+
+      if (!authData) {
+        throw new AuthError("Invalid credentials.");
+      }
+
+      // Create the authenticated player object
+      const role = (authData.role || '').toLowerCase();
+      const isAdmin = role === 'admin' || role === 'secretary' || role === 'treasurer';
+      const authenticatedPlayer: AuthPlayer = {
+        id: authData.id,
+        email: authData.email || '',
+        full_name: authData.full_name || '',
+        role,
+        login_name: authData.login_name,
+        is_admin: isAdmin
+      };
+
+      // Store the player in localStorage
+      localStorage.setItem('cricket_club_player', JSON.stringify(authenticatedPlayer));
+      console.log("User authenticated:", authenticatedPlayer);
+
+      return authenticatedPlayer;
+    } catch (error) {
+      console.error("Authentication error:", error);
+      if (error instanceof AuthError) {
+        throw error;
+      }
+      throw new AuthError("Authentication failed");
     }
   }
 
   // Sign out
   static async signOut(): Promise<void> {
     localStorage.removeItem('cricket_club_player');
+    console.log("User signed out");
   }
 
   // Get current authenticated player
   static getCurrentPlayer(): AuthPlayer | null {
-    const playerData = localStorage.getItem('cricket_club_player');
-    if (!playerData) return null;
-    
     try {
-      return JSON.parse(playerData) as AuthPlayer;
+      const playerData = localStorage.getItem('cricket_club_player');
+      if (!playerData) {
+        console.log("No authenticated user found");
+        return null;
+      }
+      
+      const player = JSON.parse(playerData) as AuthPlayer;
+      console.log("Found authenticated user:", player);
+      return player;
     } catch (error) {
+      console.error("Error retrieving user data:", error);
       localStorage.removeItem('cricket_club_player');
       return null;
     }
@@ -248,13 +280,13 @@ export class AuthService {
 
   // Check if user is admin
   static isAdmin(): boolean {
-    const player = this.getCurrentPlayer();
-    return !!player?.is_admin;
+  const player = this.getCurrentPlayer();
+  return !!player?.is_admin;
   }
 
   // Check if user has specific role
   static hasRole(role: string): boolean {
-    const player = this.getCurrentPlayer();
-    return player?.role === role;
+  const player = this.getCurrentPlayer();
+  return (player?.role || '').toLowerCase() === role.toLowerCase();
   }
 }

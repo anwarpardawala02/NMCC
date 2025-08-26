@@ -19,17 +19,24 @@ import {
   Badge,
   Textarea
 } from '@chakra-ui/react';
+import { ExternalLinkIcon } from '@chakra-ui/icons';
+import { Link as RouterLink } from 'react-router-dom';
 import { createFixture, listFixtures } from '../lib/db';
 import type { Fixture } from '../lib/db';
 
-export function AdminFixtureForm() {
+interface AdminFixtureFormProps {
+  onSuccess?: () => void;
+}
+
+export function AdminFixtureForm({ onSuccess }: AdminFixtureFormProps) {
   const [fixtures, setFixtures] = useState<Fixture[]>([]);
   const [loading, setLoading] = useState(false);
-  const [form, setForm] = useState({
+  const [form, setForm] = useState<Omit<Fixture, 'id' | 'created_at'>>({
     opponent: '',
     fixture_date: '',
-    ground: '',
-    home_away: 'home' as 'home' | 'away',
+    venue: '',
+    home_away: 'home',
+    status: 'scheduled',
     notes: ''
   });
   const toast = useToast();
@@ -61,11 +68,17 @@ export function AdminFixtureForm() {
       setForm({
         opponent: '',
         fixture_date: '',
-        ground: '',
+        venue: '',
         home_away: 'home',
+        status: 'scheduled',
         notes: ''
       });
       loadFixtures();
+      
+      // Call the onSuccess callback if provided
+      if (onSuccess) {
+        onSuccess();
+      }
     } catch (error: any) {
       toast({
         title: 'Error',
@@ -105,10 +118,10 @@ export function AdminFixtureForm() {
 
             <HStack spacing={4} w="full">
               <FormControl isRequired>
-                <FormLabel>Ground</FormLabel>
+                <FormLabel>Venue</FormLabel>
                 <Input
-                  value={form.ground}
-                  onChange={e => setForm(prev => ({ ...prev, ground: e.target.value }))}
+                  value={form.venue}
+                  onChange={e => setForm(prev => ({ ...prev, venue: e.target.value }))}
                   placeholder="Match venue/ground"
                 />
               </FormControl>
@@ -148,16 +161,28 @@ export function AdminFixtureForm() {
       </Box>
 
       <Box>
-        <Heading size="md" mb={4}>All Fixtures</Heading>
+        <HStack mb={4} justify="space-between">
+          <Heading size="md">All Fixtures</Heading>
+          <Button
+            as={RouterLink}
+            to="/fixtures/manage"
+            colorScheme="blue"
+            size="sm"
+            rightIcon={<ExternalLinkIcon />}
+          >
+            Open Fixture Manager
+          </Button>
+        </HStack>
         <Box overflowX="auto">
           <Table variant="simple" bg="white" borderRadius="lg">
             <Thead>
               <Tr>
                 <Th>Date</Th>
                 <Th>Opponent</Th>
-                <Th>Ground</Th>
+                <Th>Venue</Th>
                 <Th>Home/Away</Th>
                 <Th>Notes</Th>
+                <Th>Share Link</Th>
               </Tr>
             </Thead>
             <Tbody>
@@ -165,13 +190,24 @@ export function AdminFixtureForm() {
                 <Tr key={fixture.id}>
                   <Td>{new Date(fixture.fixture_date).toLocaleDateString()}</Td>
                   <Td>{fixture.opponent}</Td>
-                  <Td>{fixture.ground}</Td>
+                  <Td>{fixture.venue}</Td>
                   <Td>
                     <Badge colorScheme={fixture.home_away === 'home' ? "green" : "blue"}>
                       {fixture.home_away.toUpperCase()}
                     </Badge>
                   </Td>
                   <Td>{fixture.notes}</Td>
+                  <Td>
+                    <Button
+                      as={RouterLink}
+                      to={`/fixtures/${fixture.id}/availability`}
+                      size="xs"
+                      variant="outline"
+                      rightIcon={<ExternalLinkIcon />}
+                    >
+                      Open
+                    </Button>
+                  </Td>
                 </Tr>
               ))}
             </Tbody>
