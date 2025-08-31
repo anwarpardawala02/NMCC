@@ -41,10 +41,10 @@ export default function Statistics() {
 
   // Calculate team totals
   const teamStats = statistics.reduce((acc, stat) => {
-    acc.totalMatches += stat.matches_played;
-    acc.totalRuns += stat.runs_scored;
-    acc.totalWickets += stat.wickets_taken;
-    acc.totalCatches += stat.catches;
+  acc.totalMatches += stat.games;
+  acc.totalRuns += stat.runs;
+  acc.totalWickets += stat.wickets;
+  acc.totalCatches += stat.total_catches;
     return acc;
   }, { totalMatches: 0, totalRuns: 0, totalWickets: 0, totalCatches: 0 });
 
@@ -134,24 +134,24 @@ export default function Statistics() {
               </Thead>
               <Tbody>
                 {statistics
-                  .sort((a, b) => b.runs_scored - a.runs_scored) // Sort by runs scored
+                  .sort((a, b) => b.runs - a.runs) // Sort by runs scored
                   .map((stat) => (
                     <Tr key={stat.id}>
                       <Td fontWeight="medium">
                         {stat.player?.full_name}
-                        {stat.matches_played === 0 && (
+                        {stat.games === 0 && (
                           <Badge ml={2} colorScheme="gray" size="sm">No matches</Badge>
                         )}
                       </Td>
-                      <Td isNumeric>{stat.matches_played}</Td>
-                      <Td isNumeric>{stat.runs_scored}</Td>
-                      <Td isNumeric>{calculateAverage(stat.runs_scored, stat.matches_played)}</Td>
-                      <Td isNumeric>{calculateStrikeRate(stat.runs_scored, stat.balls_faced)}</Td>
-                      <Td isNumeric>{stat.fours}</Td>
-                      <Td isNumeric>{stat.sixes}</Td>
-                      <Td isNumeric>{stat.wickets_taken}</Td>
-                      <Td isNumeric>{stat.overs_bowled}</Td>
-                      <Td isNumeric>{stat.catches}</Td>
+                      <Td isNumeric>{stat.games}</Td>
+                      <Td isNumeric>{stat.runs}</Td>
+                      <Td isNumeric>{calculateAverage(stat.runs, stat.inns - stat.not_outs)}</Td>
+                      <Td isNumeric>{calculateStrikeRate(stat.runs, 0)}</Td>
+                      <Td isNumeric>{stat.fifties}</Td>
+                      <Td isNumeric>{stat.hundreds}</Td>
+                      <Td isNumeric>{stat.wickets}</Td>
+                      <Td isNumeric>{stat.overs}</Td>
+                      <Td isNumeric>{stat.total_catches}</Td>
                     </Tr>
                   ))}
               </Tbody>

@@ -95,8 +95,8 @@ export default function AdminFeesMatrix() {
   function openEditor(p: Player, f: Fixture | null, defaultCategory: ClubFee['category']) {
     setEditCell({ player: p, fixture: f });
     setCategory(defaultCategory);
-    const existing = getFee(p.id, f ? f.id : null, defaultCategory);
-  setAmount(existing?.amount ?? (defaultCategory === 'Match Fee' ? 25 : 0));
+  const existing = getFee(p.id, f ? f.id : null, defaultCategory);
+  setAmount(existing?.amount ?? (defaultCategory === 'Match Fee' ? 10 : 0));
     setPaidOn(existing?.paid_on ?? new Date().toISOString().slice(0, 10));
     setNotes(existing?.notes ?? '');
     onOpen();

@@ -19,7 +19,7 @@ import {
   useDisclosure,
   Checkbox
 } from "@chakra-ui/react";
-import { CalendarIcon, TimeIcon } from "@chakra-ui/icons";
+import { CalendarIcon } from "@chakra-ui/icons";
 import { MdLocationOn } from 'react-icons/md';
 import { listMatches, getMatchAvailability, setMatchAvailability } from "../lib/db";
 import { useAuth } from "../hooks/useAuth";
@@ -89,22 +89,13 @@ export default function Matches() {
 
   const upcomingMatches = matches.filter(match => {
     const today = new Date().toISOString().split('T')[0];
-    return match.match_date >= today && match.status === 'scheduled';
+    return match.date >= today && !match.result;
   });
 
   const pastMatches = matches.filter(match => {
     const today = new Date().toISOString().split('T')[0];
-    return match.match_date < today || match.status === 'completed';
+    return match.date < today || match.result;
   });
-
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'scheduled': return 'green';
-      case 'completed': return 'blue';
-      case 'cancelled': return 'red';
-      default: return 'gray';
-    }
-  };
 
   const MatchCard = ({ match, isPast = false }: { match: Match; isPast?: boolean }) => (
     <Box 
@@ -117,28 +108,21 @@ export default function Matches() {
     >
       <VStack align="start" spacing={3}>
         <HStack justify="space-between" w="full">
-          <Badge colorScheme={match.home_away === 'home' ? 'green' : 'blue'}>
-            {match.home_away.toUpperCase()}
+          <Badge colorScheme={match.venue.includes("Home") ? 'green' : 'blue'}>
+            {match.venue.includes("Home") ? "HOME" : "AWAY"}
           </Badge>
-          <Badge colorScheme={getStatusColor(match.status)}>
-            {match.status.toUpperCase()}
-          </Badge>
+          {match.result && (
+            <Badge colorScheme="blue">COMPLETED</Badge>
+          )}
         </HStack>
         
-        <Heading size="md">vs {match.opponent}</Heading>
+        <Heading size="md">vs {match.opposition}</Heading>
         
         <VStack align="start" spacing={2} fontSize="sm" color="gray.600">
           <HStack>
             <CalendarIcon boxSize={4} />
-            <Text>{new Date(match.match_date).toLocaleDateString()}</Text>
+            <Text>{new Date(match.date).toLocaleDateString()}</Text>
           </HStack>
-          
-          {match.match_time && (
-            <HStack>
-              <TimeIcon boxSize={4} />
-              <Text>{match.match_time}</Text>
-            </HStack>
-          )}
           
           <HStack>
             <MdLocationOn size={16} />
@@ -146,9 +130,11 @@ export default function Matches() {
           </HStack>
         </VStack>
         
-        <Badge colorScheme="purple" textTransform="capitalize">
-          {match.match_type}
-        </Badge>
+        {match.result && (
+          <Badge colorScheme="purple">
+            {match.result}
+          </Badge>
+        )}
         
         {!isPast && user && (
           <Button 
@@ -210,14 +196,14 @@ export default function Matches() {
         <ModalOverlay />
         <ModalContent>
           <ModalHeader>
-            Match Availability - vs {selectedMatch?.opponent}
+            Match Availability - vs {selectedMatch?.opposition}
           </ModalHeader>
           <ModalCloseButton />
           <ModalBody pb={6}>
             <VStack spacing={4} align="stretch">
               <Box>
                 <Text fontWeight="bold" mb={2}>
-                  {new Date(selectedMatch?.match_date || '').toLocaleDateString()}
+                  {selectedMatch?.date ? new Date(selectedMatch.date).toLocaleDateString() : ''}
                 </Text>
                 <Text color="gray.600">{selectedMatch?.venue}</Text>
               </Box>

@@ -10,6 +10,7 @@ export interface Player {
   active: boolean;
   is_admin: boolean;
   role?: 'player' | 'secretary' | 'treasurer' | 'admin';
+  skill?: 'batsman' | 'bowler' | 'all-rounder';
   created_at: string;
 }
 
@@ -85,14 +86,13 @@ export interface Transaction {
 
 export interface Match {
   id: string;
-  opponent: string;
-  match_date: string;
-  match_time?: string;
+  date: string;
+  opposition: string;
   venue: string;
-  match_type: 'league' | 'friendly' | 'cup' | 'tournament';
-  home_away: 'home' | 'away';
-  status: 'scheduled' | 'completed' | 'cancelled';
-  created_at: string;
+  result: string;
+  player_id?: string;
+  player_name?: string;
+  created_at?: string;
 }
 
 export interface MatchAvailability {
@@ -107,19 +107,37 @@ export interface MatchAvailability {
 }
 
 export interface PlayerStatistics {
-  id: string;
+  id: number;
   player_id: string;
+  player_name: string;
   season: string;
-  matches_played: number;
-  runs_scored: number;
-  balls_faced: number;
-  fours: number;
-  sixes: number;
-  wickets_taken: number;
-  overs_bowled: number;
-  runs_conceded: number;
-  catches: number;
+  games: number;
+  inns: number;
+  not_outs: number;
+  runs: number;
+  high_score: number;
+  high_score_not_out: boolean;
+  avg: number;
+  fifties: number;
+  hundreds: number;
+  strike_rate: number;
+  overs: number;
+  maidens: number;
+  bowling_runs: number;
+  wickets: number;
+  best_bowling: string;
+  five_wicket_haul: number;
+  economy_rate: number;
+  bowling_strike_rate: number;
+  bowling_average: number;
+  wk_catches: number;
   stumpings: number;
+  total_wk_wickets: number;
+  fielding_catches: number;
+  run_outs: number;
+  total_fielding_wickets: number;
+  total_catches: number;
+  total_victims: number;
   player?: Player;
 }
 
@@ -464,16 +482,16 @@ export async function listTransactions(filters: { month?: string; kind?: string 
 // Match functions
 export async function listMatches(): Promise<Match[]> {
   const { data, error } = await supabase
-    .from('matches')
+    .from('match_details')
     .select('*')
-    .order('match_date', { ascending: true });
+    .order('date', { ascending: true });
   if (error) throw error;
   return data as Match[];
 }
 
 export async function createMatch(match: Omit<Match, 'id' | 'created_at'>) {
   const { data, error } = await supabase
-    .from('matches')
+    .from('match_details')
     .insert([match])
     .select()
     .single();

@@ -5,7 +5,6 @@ import {
   FormControl, 
   FormLabel, 
   Input, 
-  Select,
   Button,
   useToast,
   Box,
@@ -25,12 +24,10 @@ export function AdminMatchForm() {
   const [matches, setMatches] = useState<Match[]>([]);
   const [loading, setLoading] = useState(false);
   const [form, setForm] = useState({
-    opponent: '',
-    match_date: '',
-    match_time: '',
+    opposition: '',
+    date: '',
     venue: '',
-    match_type: 'league' as 'league' | 'friendly' | 'cup' | 'tournament',
-    home_away: 'home' as 'home' | 'away'
+    result: ''
   });
   const toast = useToast();
 
@@ -52,19 +49,17 @@ export function AdminMatchForm() {
     setLoading(true);
     
     try {
-  await createMatch({ ...form, status: 'scheduled' });
+  await createMatch(form);
       toast({
         title: 'Match Created',
         description: 'Match has been added to the fixture list',
         status: 'success'
       });
       setForm({
-        opponent: '',
-        match_date: '',
-        match_time: '',
+        opposition: '',
+        date: '',
         venue: '',
-        match_type: 'league',
-        home_away: 'home'
+        result: ''
       });
       loadMatches();
     } catch (error: any) {
@@ -86,10 +81,10 @@ export function AdminMatchForm() {
           <VStack spacing={4}>
             <HStack spacing={4} w="full">
               <FormControl isRequired>
-                <FormLabel>Opponent</FormLabel>
+                <FormLabel>Opposition</FormLabel>
                 <Input
-                  value={form.opponent}
-                  onChange={e => setForm(prev => ({ ...prev, opponent: e.target.value }))}
+                  value={form.opposition}
+                  onChange={e => setForm(prev => ({ ...prev, opposition: e.target.value }))}
                   placeholder="Opposition team name"
                 />
               </FormControl>
@@ -98,22 +93,13 @@ export function AdminMatchForm() {
                 <FormLabel>Date</FormLabel>
                 <Input
                   type="date"
-                  value={form.match_date}
-                  onChange={e => setForm(prev => ({ ...prev, match_date: e.target.value }))}
+                  value={form.date}
+                  onChange={e => setForm(prev => ({ ...prev, date: e.target.value }))}
                 />
               </FormControl>
             </HStack>
 
             <HStack spacing={4} w="full">
-              <FormControl>
-                <FormLabel>Time</FormLabel>
-                <Input
-                  type="time"
-                  value={form.match_time}
-                  onChange={e => setForm(prev => ({ ...prev, match_time: e.target.value }))}
-                />
-              </FormControl>
-
               <FormControl isRequired>
                 <FormLabel>Venue</FormLabel>
                 <Input
@@ -122,31 +108,14 @@ export function AdminMatchForm() {
                   placeholder="Match venue"
                 />
               </FormControl>
-            </HStack>
 
-            <HStack spacing={4} w="full">
-              <FormControl isRequired>
-                <FormLabel>Match Type</FormLabel>
-                <Select
-                  value={form.match_type}
-                  onChange={e => setForm(prev => ({ ...prev, match_type: e.target.value as any }))}
-                >
-                  <option value="league">League</option>
-                  <option value="friendly">Friendly</option>
-                  <option value="cup">Cup</option>
-                  <option value="tournament">Tournament</option>
-                </Select>
-              </FormControl>
-
-              <FormControl isRequired>
-                <FormLabel>Home/Away</FormLabel>
-                <Select
-                  value={form.home_away}
-                  onChange={e => setForm(prev => ({ ...prev, home_away: e.target.value as any }))}
-                >
-                  <option value="home">Home</option>
-                  <option value="away">Away</option>
-                </Select>
+              <FormControl>
+                <FormLabel>Result</FormLabel>
+                <Input
+                  value={form.result}
+                  onChange={e => setForm(prev => ({ ...prev, result: e.target.value }))}
+                  placeholder="Match result (if known)"
+                />
               </FormControl>
             </HStack>
 
@@ -170,33 +139,27 @@ export function AdminMatchForm() {
             <Thead>
               <Tr>
                 <Th>Date</Th>
-                <Th>Opponent</Th>
+                <Th>Opposition</Th>
                 <Th>Venue</Th>
-                <Th>Type</Th>
-                <Th>Home/Away</Th>
-                <Th>Status</Th>
+                <Th>Result</Th>
+                <Th>Player</Th>
               </Tr>
             </Thead>
             <Tbody>
               {matches.map(match => (
                 <Tr key={match.id}>
-                  <Td>{new Date(match.match_date).toLocaleDateString()}</Td>
-                  <Td>{match.opponent}</Td>
+                  <Td>{new Date(match.date).toLocaleDateString()}</Td>
+                  <Td>{match.opposition}</Td>
                   <Td>{match.venue}</Td>
                   <Td>
-                    <Badge colorScheme="purple" textTransform="capitalize">
-                      {match.match_type}
-                    </Badge>
+                    {match.result || "N/A"}
                   </Td>
                   <Td>
-                    <Badge colorScheme={match.home_away === 'home' ? 'green' : 'blue'}>
-                      {match.home_away.toUpperCase()}
-                    </Badge>
-                  </Td>
-                  <Td>
-                    <Badge colorScheme={match.status === 'scheduled' ? 'yellow' : 'gray'}>
-                      {match.status.toUpperCase()}
-                    </Badge>
+                    {match.player_name ? (
+                      <Badge colorScheme="green">
+                        {match.player_name}
+                      </Badge>
+                    ) : "Team Match"}
                   </Td>
                 </Tr>
               ))}

@@ -46,6 +46,32 @@ export class AuthError extends Error {
   }
 }
 
+// Check if a user has a specific role
+export async function hasRole(userId: string, role: string): Promise<boolean> {
+  const { data, error } = await supabase
+    .from('user_roles')
+    .select('*')
+    .eq('user_id', userId)
+    .eq('role', role)
+    .single();
+  
+  return !!data && !error;
+}
+
+// Check if a user is a fixture manager
+export function isFixtureManager(user: any): boolean {
+  // First check if the user is an admin (admins can do everything)
+  if (user.is_admin) return true;
+  
+  // Then check if they have the fixture_manager role
+  if (user.roles && Array.isArray(user.roles)) {
+    return user.roles.includes('fixture_manager');
+  }
+  
+  // Default to false if no roles information available
+  return false;
+}
+
 // Authentication service
 export class AuthService {
   // Authenticate user by login_name only (dev/no-password) and derive is_admin from role

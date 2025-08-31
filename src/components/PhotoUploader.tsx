@@ -28,8 +28,10 @@ export function PhotoUploader({ onSuccess }: PhotoUploaderProps) {
     setLoading(true);
 
     try {
-  const url = await uploadPhoto(file, file.name);
-  onSuccess(url);
+      // Uses the improved uploadPhoto function that handles base64 conversion
+      const url = await uploadPhoto(file, file.name);
+      onSuccess(url);
+      
       toast({
         title: 'Success',
         description: 'Photo uploaded successfully',
