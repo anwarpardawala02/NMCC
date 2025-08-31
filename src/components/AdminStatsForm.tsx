@@ -262,13 +262,13 @@ export function AdminStatsForm() {
               {statistics.map(stat => (
                 <Tr key={stat.id}>
                   <Td>{stat.player?.full_name}</Td>
-                  <Td isNumeric>{stat.matches_played}</Td>
-                  <Td isNumeric>{stat.runs_scored}</Td>
+                  <Td isNumeric>{stat.games}</Td>
+                  <Td isNumeric>{stat.runs}</Td>
                   <Td isNumeric>
-                    {stat.matches_played > 0 ? (stat.runs_scored / stat.matches_played).toFixed(2) : '0.00'}
+                    {stat.inns - stat.not_outs > 0 ? (stat.runs / (stat.inns - stat.not_outs)).toFixed(2) : '0.00'}
                   </Td>
-                  <Td isNumeric>{stat.wickets_taken}</Td>
-                  <Td isNumeric>{stat.catches}</Td>
+                  <Td isNumeric>{stat.wickets}</Td>
+                  <Td isNumeric>{stat.total_catches}</Td>
                 </Tr>
               ))}
             </Tbody>

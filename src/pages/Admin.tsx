@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { Link as RouterLink } from "react-router-dom";
 import { 
   Box, 
   Heading, 
@@ -8,8 +9,11 @@ import {
   Tab,
   TabPanel,
   Container,
-  VStack
+  VStack,
+  Text,
+  Button
 } from "@chakra-ui/react";
+import { FiUpload } from "react-icons/fi";
 import { RequireAdmin } from "../routes/RequireAdmin";
 import { TransactionForm } from "../components/TransactionForm";
 import { TransactionsTable } from "../components/TransactionsTable";
@@ -82,6 +86,7 @@ function AdminDashboard() {
             <Tab>Expenses</Tab>
             <Tab>Sponsors</Tab>
             <Tab>Statistics</Tab>
+            <Tab>Scoresheets</Tab>
           </TabList>
 
           <TabPanels>
@@ -132,6 +137,26 @@ function AdminDashboard() {
             {/* Statistics Tab */}
             <TabPanel>
               <AdminStatsForm />
+            </TabPanel>
+            
+            {/* Scoresheets Tab */}
+            <TabPanel>
+              <Box p={5} borderWidth={1} borderRadius="lg" bg="white" boxShadow="md">
+                <Heading size="md" mb={4}>Scoresheet Upload</Heading>
+                <Text mb={4}>
+                  Upload match scoresheets for automatic player statistics processing. 
+                  The system will extract player performances and update team statistics.
+                </Text>
+                <Button
+                  as={RouterLink}
+                  to="/scoresheets/upload" 
+                  colorScheme="green" 
+                  size="lg" 
+                  rightIcon={<FiUpload />}
+                >
+                  Go to Scoresheet Upload
+                </Button>
+              </Box>
             </TabPanel>
           </TabPanels>
         </Tabs>

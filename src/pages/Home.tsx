@@ -38,7 +38,7 @@ export default function Home() {
       // Filter upcoming matches
       const today = new Date().toISOString().split('T')[0];
       const upcoming = matchesData
-        .filter(match => match.match_date >= today && match.status === 'scheduled')
+        .filter(match => match.date >= today)
         .slice(0, 3);
       setUpcomingMatches(upcoming);
     } catch (error) {
@@ -94,12 +94,12 @@ export default function Home() {
             {upcomingMatches.map((match) => (
               <Box key={match.id} p={4} borderWidth={1} borderRadius="lg" bg="white">
                 <VStack align="start" spacing={2}>
-                  <Badge colorScheme={match.home_away === 'home' ? 'green' : 'blue'}>
-                    {match.home_away.toUpperCase()}
+                  <Badge colorScheme="blue">
+                    {match.venue.includes("Home") ? "HOME" : "AWAY"}
                   </Badge>
-                  <Heading size="md">vs {match.opponent}</Heading>
+                  <Heading size="md">vs {match.opposition}</Heading>
                   <Text color="gray.600">
-                    {new Date(match.match_date).toLocaleDateString()}
+                    {new Date(match.date).toLocaleDateString()}
                   </Text>
                   <Text fontSize="sm" color="gray.500">
                     {match.venue}

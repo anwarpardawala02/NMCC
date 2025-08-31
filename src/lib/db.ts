@@ -86,14 +86,13 @@ export interface Transaction {
 
 export interface Match {
   id: string;
-  opponent: string;
-  match_date: string;
-  match_time?: string;
+  date: string;
+  opposition: string;
   venue: string;
-  match_type: 'league' | 'friendly' | 'cup' | 'tournament';
-  home_away: 'home' | 'away';
-  status: 'scheduled' | 'completed' | 'cancelled';
-  created_at: string;
+  result: string;
+  player_id?: string;
+  player_name?: string;
+  created_at?: string;
 }
 
 export interface MatchAvailability {
@@ -483,16 +482,16 @@ export async function listTransactions(filters: { month?: string; kind?: string 
 // Match functions
 export async function listMatches(): Promise<Match[]> {
   const { data, error } = await supabase
-    .from('matches')
+    .from('match_details')
     .select('*')
-    .order('match_date', { ascending: true });
+    .order('date', { ascending: true });
   if (error) throw error;
   return data as Match[];
 }
 
 export async function createMatch(match: Omit<Match, 'id' | 'created_at'>) {
   const { data, error } = await supabase
-    .from('matches')
+    .from('match_details')
     .insert([match])
     .select()
     .single();

@@ -17,6 +17,7 @@ import Team from "../pages/Team";
 import Unauthorized from "../pages/Unauthorized";
 import FixtureAvailabilityPage from "../pages/FixtureAvailabilityPage";
 import FixtureAvailabilityDetailPage from "../pages/FixtureAvailabilityDetailPage";
+import ScoresheetUpload from "../pages/scoresheets/upload";
 
 // Team subpages
 import TeamSquad from "../pages/team/Squad";
@@ -182,6 +183,7 @@ export default function Layout() {
           <Route path="/fixtures/:fixtureId/availability" element={<FixtureAvailabilityPage />} />
           <Route path="/matches/availability/:fixtureId" element={<FixtureAvailabilityPage />} />
           <Route path="/fixtures/:fixtureId/availability-detail" element={<FixtureAvailabilityDetailPage />} />
+          <Route path="/scoresheets/upload" element={<ScoresheetUpload />} />
         </Routes>
       </Box>
 

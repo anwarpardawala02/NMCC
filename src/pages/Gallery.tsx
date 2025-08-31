@@ -67,7 +67,7 @@ export default function ClubMediaHub() {
     try {
       const data = await listBlogs(true);
       setBlogs(data);
-    } catch (error) {
+    } catch (error: any) {
       toast({
         title: "Error loading blogs",
         description: error.message,
