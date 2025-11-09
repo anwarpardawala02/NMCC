@@ -7,19 +7,28 @@ import { FaBowlingBall, FaStar, FaRunning, FaHandsHelping } from "react-icons/fa
 export default function TeamSquad() {
   const [players, setPlayers] = useState<Player[]>([]);
   const [stats, setStats] = useState<PlayerStatistics[]>([]);
+  // Add current season as state
+  const [season] = useState<string>(new Date().getFullYear().toString());
 
   useEffect(() => {
     loadData();
   }, []);
+  
+  // Add effect to reload data when season changes
+  useEffect(() => {
+    console.log("Season changed to:", season);
+    loadData();
+  }, [season]);
 
   async function loadData() {
     try {
       const [playersData, statsData] = await Promise.all([
         listPlayers(),
-        listPlayerStatistics()
+        listPlayerStatistics(season) // Pass season parameter here
       ]);
       console.log("Players loaded:", playersData);
       console.log("Stats loaded:", statsData);
+      console.log("Using season:", season);
       setPlayers(playersData);
       setStats(statsData);
     } catch (error) {
@@ -80,7 +89,7 @@ export default function TeamSquad() {
 
       {stats.length === 0 && (
         <Box p={4} bg="yellow.100" borderRadius="md" textAlign="center">
-          <Text>No player statistics found. Stats may need to be imported or created.</Text>
+          <Text>No player statistics found for the {season} season. Stats may need to be imported or created.</Text>
         </Box>
       )}
 
@@ -92,7 +101,6 @@ export default function TeamSquad() {
             `linear(to-br, white, ${skillColor}.50)`,
             `linear(to-br, gray.800, ${skillColor}.900)`
           );
-          
           return (
             <Box 
               key={player.id} 
@@ -113,9 +121,7 @@ export default function TeamSquad() {
                     </Flex>
                   </Badge>
                 </Flex>
-                
                 <Divider mb={3} />
-                
                 <StatGroup>
                   <Stat>
                     <Flex align="center" mb={1}>
@@ -124,7 +130,6 @@ export default function TeamSquad() {
                     </Flex>
                     <StatNumber fontSize="xl">{stat?.runs ?? 0}</StatNumber>
                   </Stat>
-                  
                   <Stat>
                     <Flex align="center" mb={1}>
                       <Icon as={FaBowlingBall} mr={1} color={`${skillColor}.500`} />
@@ -132,7 +137,6 @@ export default function TeamSquad() {
                     </Flex>
                     <StatNumber fontSize="xl">{stat?.wickets ?? 0}</StatNumber>
                   </Stat>
-                  
                   <Stat>
                     <Flex align="center" mb={1}>
                       <Icon as={FaHandsHelping} mr={1} color={`${skillColor}.500`} />
@@ -141,7 +145,6 @@ export default function TeamSquad() {
                     <StatNumber fontSize="xl">{stat?.total_catches ?? 0}</StatNumber>
                   </Stat>
                 </StatGroup>
-                
                 {stat && (
                   <HStack mt={4} fontSize="sm" spacing={3} color="gray.500">
                     <Text>Inns: {stat.inns}</Text>

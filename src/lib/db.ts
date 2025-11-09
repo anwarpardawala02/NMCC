@@ -534,12 +534,49 @@ export async function listPlayerStatistics(season?: string): Promise<PlayerStati
   }
   
   const { data, error }: any = await query;
+  
+  // Debug logging
+  console.log('listPlayerStatistics called with season:', season);
+  console.log('Query result:', { data, error });
+  
   if (error) {
+    // RLS might be blocking access - try without the foreign key join
+    if (error.code === 'PGRST116' || error.message?.includes('permission')) {
+      console.warn('RLS may be blocking access, trying without join...');
+      
+      // Try fetching without the join
+      let simpleQuery = supabase
+        .from('player_statistics')
+        .select('*');
+      
+      if (season) {
+        simpleQuery = simpleQuery.eq('season', season);
+      }
+      
+      const { data: simpleData, error: simpleError }: any = await simpleQuery;
+      
+      console.log('Simple query result:', { simpleData, simpleError });
+      
+      if (simpleError) {
+        console.error('Failed to fetch statistics:', simpleError);
+        if (simpleError.code === '42P01' || simpleError.code === '42703' || simpleError.code === 'PGRST205') {
+          return [] as PlayerStatistics[];
+        }
+        throw simpleError;
+      }
+      
+      return simpleData as PlayerStatistics[];
+    }
+    
     if (error.code === '42P01' || error.code === '42703' || error.code === 'PGRST205') {
       return [] as PlayerStatistics[];
     }
+    
+    console.error('Error fetching statistics:', error);
     throw error;
   }
+  
+  console.log('Successfully fetched', data?.length || 0, 'statistics records');
   return data as PlayerStatistics[];
 }
 

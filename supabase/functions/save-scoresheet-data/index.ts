@@ -193,38 +193,94 @@ Deno.serve(async (req) => {
 
 // Helper function to process NMCC player
 async function processNMCCPlayer(supabase, playerName, matchDetails, stats) {
-  // 1. Find or create the player
-  const { data: player, error: playerError } = await supabase
+  console.log(`Processing NMCC player: ${playerName}`)
+  
+  // 1. Try exact match first (case insensitive)
+  const { data: exactPlayer, error: exactPlayerError } = await supabase
     .from('players')
-    .select('id')
-    .ilike('full_name', `%${playerName}%`)
+    .select('id, full_name')
+    .ilike('full_name', playerName)  // Try exact match first
     .eq('active', true)
     .maybeSingle()
   
+  // Then try other matching strategies
+  let player = exactPlayer
   let playerId = player?.id
   
   if (!playerId) {
-    // Create the player if not found
-    const { data: newPlayer, error: newPlayerError } = await supabase
-      .from('players')
-      .insert({
-        full_name: playerName,
-        active: true,
-        join_date: new Date().toISOString().split('T')[0]
-      })
-      .select('id')
-      .single()
+    console.log(`No exact match found for: ${playerName}, trying alternative matches`)
     
-    if (newPlayerError) throw newPlayerError
-    playerId = newPlayer.id
+    // Try to find by first name + last name initial
+    const nameParts = playerName.trim().split(' ')
+    
+    if (nameParts.length > 1) {
+      const firstName = nameParts[0]
+      const lastInitial = nameParts[nameParts.length - 1][0]
+      
+      // Query with more targeted approach
+      const { data: smartPlayer, error: smartPlayerError } = await supabase
+        .from('players')
+        .select('id, full_name')
+        .ilike('full_name', `${firstName}%${lastInitial}%`)
+        .eq('active', true)
+        .maybeSingle()
+      
+      player = smartPlayer
+      playerId = player?.id
+      
+      if (playerId) {
+        console.log(`Found player by first name + last initial: ${playerName} -> ${player.full_name}`)
+      }
+    }
+    
+    // If still not found, fall back to loose matching
+    if (!playerId) {
+      const { data: loosePlayer, error: loosePlayerError } = await supabase
+        .from('players')
+        .select('id, full_name')
+        .ilike('full_name', `%${playerName}%`)
+        .eq('active', true)
+        .maybeSingle()
+      
+      player = loosePlayer
+      playerId = player?.id
+      
+      if (playerId) {
+        console.log(`Found player by loose matching: ${playerName} -> ${player.full_name}`)
+      }
+    }
+    
+    // If still not found, create new player
+    if (!playerId) {
+      console.log(`Creating new player: ${playerName}`)
+      const { data: newPlayer, error: newPlayerError } = await supabase
+        .from('players')
+        .insert({
+          full_name: playerName,
+          active: true,
+          join_date: new Date().toISOString().split('T')[0]
+        })
+        .select('id, full_name')
+        .single()
+      
+      if (newPlayerError) throw newPlayerError
+      player = newPlayer
+      playerId = player.id
+    }
+  } else {
+    console.log(`Found exact match for player: ${playerName} -> ${player.full_name}`)
   }
   
   // 2. Create a new match_details entry for this player
+  // Use the database player name when available, scoresheet name as fallback
+  const playerNameToUse = player?.full_name || playerName
+  console.log(`Creating match details for: ${playerNameToUse} (ID: ${playerId})`)
+  
   const { data: matchDetail, error: matchDetailError } = await supabase
     .from('match_details')
     .insert({
       player_id: playerId,
-      player_name: playerName,
+      player_name: playerNameToUse,
       date: matchDetails.date,
       opposition: matchDetails.opposition,
       venue: matchDetails.venue,
@@ -249,19 +305,25 @@ async function processNMCCPlayer(supabase, playerName, matchDetails, stats) {
   
   if (existingStats) {
     // Update existing stats
+    const updatedStats = updatePlayerStatistics(existingStats, stats)
     await supabase
       .from('player_statistics')
-      .update(updatePlayerStatistics(existingStats, stats))
+      .update(updatedStats)
       .eq('id', existingStats.id)
+    
+    console.log(`Updated statistics for player ${playerNameToUse} for season ${season}`)
   } else {
     // Create new stats
+    const initialStats = createInitialPlayerStatistics(stats)
+    console.log(`Creating new statistics for player ${playerNameToUse} for season ${season}`)
+    
     await supabase
       .from('player_statistics')
       .insert({
         player_id: playerId,
-        player_name: playerName,
+        player_name: playerNameToUse,
         season,
-        ...createInitialPlayerStatistics(stats)
+        ...initialStats
       })
   }
   

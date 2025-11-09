@@ -45,6 +45,10 @@ type ParsedData = {
   bowling: BowlingStat[];
   filePath: string;
   rawText?: string;
+  error?: string;
+  functionVersion?: string;
+  processedAt?: string;
+  preprocessingApplied?: string[];
 };
 
 export default function ScoresheetUpload() {
@@ -148,11 +152,16 @@ export default function ScoresheetUpload() {
       setProcessingStatus('Processing scoresheet with OCR...');
       
       // 2. Call the edge function with file data directly as base64
+      console.log('🚀 Calling process-scoresheet function...');
+      console.log('📋 Request payload:', { fileName: uploadedFile!.name, timestamp: Date.now() });
+      
+      // Add timestamp to avoid caching
       const { data: processData, error: processError } = await supabase.functions
         .invoke('process-scoresheet', {
           body: { 
             fileName: uploadedFile!.name,
-            fileData: base64Data
+            fileData: base64Data,
+            timestamp: Date.now() // Add timestamp to prevent caching
           }
         });
       
@@ -161,8 +170,32 @@ export default function ScoresheetUpload() {
         throw processError;
       }
       
-      setUploadProgress(100);
-      setProcessingStatus('Scoresheet processed successfully!');
+      console.log('✅ Function returned data:', processData);
+      console.log('📋 Raw text sample:', processData.rawText?.substring(0, 200));
+      console.log('📊 Data summary:', {
+        battingStats: processData.batting.length,
+        bowlingStats: processData.bowling.length,
+        version: processData.functionVersion,
+        error: processData.error
+      });
+      
+      // Check if there was an OCR error
+      if (processData.error) {
+        console.warn('⚠️ OCR processing error:', processData.error);
+        setErrors([...errors, `OCR processing error: ${processData.error}`]);
+        toast({
+          title: 'OCR Processing Issue',
+          description: processData.error,
+          status: 'warning',
+          duration: 9000,
+          isClosable: true,
+        });
+        setUploadProgress(100);
+        setProcessingStatus('Scoresheet processed with errors. See warnings below.');
+      } else {
+        setUploadProgress(100);
+        setProcessingStatus('Scoresheet processed successfully!');
+      }
       
       // 3. Show the parsed data
       setParsedData(processData);
@@ -335,6 +368,22 @@ export default function ScoresheetUpload() {
               <TabPanel>
                 {parsedData ? (
                   <VStack spacing={8} align="stretch">
+                    {parsedData.error && (
+                      <Alert status="warning">
+                        <AlertIcon />
+                        <Text>OCR Processing Error: {parsedData.error}</Text>
+                      </Alert>
+                    )}
+                    
+                    {parsedData.preprocessingApplied && parsedData.preprocessingApplied.length > 0 && (
+                      <Alert status="info" mt={2}>
+                        <AlertIcon />
+                        <Box>
+                          <Text fontWeight="bold">Image Preprocessing Applied:</Text>
+                          <Text>{Array.isArray(parsedData.preprocessingApplied) ? parsedData.preprocessingApplied.join(', ') : parsedData.preprocessingApplied}</Text>
+                        </Box>
+                      </Alert>
+                    )}
                     <Card>
                       <CardHeader>
                         <Heading size="md">Match Details</Heading>
