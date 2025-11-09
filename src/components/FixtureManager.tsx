@@ -30,12 +30,14 @@ import {
 } from '@chakra-ui/react';
 import { Link as RouterLink } from 'react-router-dom';
 import { ChevronDownIcon, ExternalLinkIcon, AddIcon } from '@chakra-ui/icons';
-import type { Fixture } from '../lib/db';
-import { listFixtures, getFixtureAvailability } from '../lib/db';
+import type { Fixture, Player } from '../lib/db';
+import { listFixtures, getFixtureAvailability, listPlayers } from '../lib/db';
 import { AdminFixtureForm } from './AdminFixtureForm';
+import { SendWhatsAppPollButton } from './SendWhatsAppPollButton';
 
 export function FixtureManager() {
   const [fixtures, setFixtures] = useState<Array<Fixture & { available_count?: number, not_available_count?: number }>>([]);
+  const [players, setPlayers] = useState<Player[]>([]);
   const [loading, setLoading] = useState(true);
   const toast = useToast();
   const { isOpen, onOpen, onClose } = useDisclosure();
@@ -48,6 +50,7 @@ export function FixtureManager() {
     setLoading(true);
     try {
       const fixturesList = await listFixtures();
+      const playersList = await listPlayers(true);  // Changed: true to get full player data including phone
       
       // Add availability counts
       const enhancedFixtures = await Promise.all(
@@ -65,6 +68,7 @@ export function FixtureManager() {
       );
       
       setFixtures(enhancedFixtures);
+      setPlayers(playersList);
     } catch (error) {
       console.error('Failed to load fixtures:', error);
       toast({
@@ -176,32 +180,39 @@ export function FixtureManager() {
                       </HStack>
                     </Td>
                     <Td>
-                      <Menu>
-                        <MenuButton as={Button} rightIcon={<ChevronDownIcon />} size="sm">
-                          Actions
-                        </MenuButton>
-                        <MenuList>
-                          <MenuItem 
-                            as={RouterLink} 
-                            to={`/fixtures/${fixture.id}/availability-detail`}
-                            icon={<ExternalLinkIcon />}
-                          >
-                            View Availability
-                          </MenuItem>
-                          <MenuItem
-                            as={RouterLink}
-                            to={`/fixtures/${fixture.id}/send-reminder`}
-                          >
-                            Send Reminder
-                          </MenuItem>
-                          <MenuItem
-                            as={RouterLink}
-                            to={`/fixtures/${fixture.id}/select-team`}
-                          >
-                            Select Team
-                          </MenuItem>
-                        </MenuList>
-                      </Menu>
+                      <HStack spacing={2}>
+                        <SendWhatsAppPollButton 
+                          fixture={fixture}
+                          players={players}
+                          onSendComplete={() => loadFixtures()}
+                        />
+                        <Menu>
+                          <MenuButton as={Button} rightIcon={<ChevronDownIcon />} size="sm">
+                            Actions
+                          </MenuButton>
+                          <MenuList>
+                            <MenuItem 
+                              as={RouterLink} 
+                              to={`/fixtures/${fixture.id}/availability-detail`}
+                              icon={<ExternalLinkIcon />}
+                            >
+                              View Availability
+                            </MenuItem>
+                            <MenuItem
+                              as={RouterLink}
+                              to={`/fixtures/${fixture.id}/send-reminder`}
+                            >
+                              Send Reminder
+                            </MenuItem>
+                            <MenuItem
+                              as={RouterLink}
+                              to={`/fixtures/${fixture.id}/select-team`}
+                            >
+                              Select Team
+                            </MenuItem>
+                          </MenuList>
+                        </Menu>
+                      </HStack>
                     </Td>
                   </Tr>
                 ))}

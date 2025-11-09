@@ -21,14 +21,17 @@ import {
   CardBody
 } from '@chakra-ui/react';
 import { useParams, useNavigate } from 'react-router-dom';
-import type { Fixture, Availability } from '../lib/db';
-import { getFixtureWithAvailability } from '../lib/db';
+import type { Fixture, Availability, Player } from '../lib/db';
+import { getFixtureWithAvailability, listPlayers, getFixtureAvailability } from '../lib/db';
+import { SendWhatsAppPollButton } from '../components/SendWhatsAppPollButton';
+import { SendReminderButton } from '../components/SendReminderButton';
 
 export default function FixtureAvailabilityDetailPage() {
   const { fixtureId } = useParams<{ fixtureId: string }>();
   const navigate = useNavigate();
   const [fixture, setFixture] = useState<Fixture & { available_count?: number, not_available_count?: number } | null>(null);
   const [availabilityList, setAvailabilityList] = useState<Availability[]>([]);
+  const [players, setPlayers] = useState<Player[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -43,11 +46,11 @@ export default function FixtureAvailabilityDetailPage() {
     try {
       if (!fixtureId) return;
       const fixtureData = await getFixtureWithAvailability(fixtureId);
+      const playersList = await listPlayers(true);  // Changed: true to get full player data including phone
+      const availabilityData = await getFixtureAvailability(fixtureId);
       setFixture(fixtureData);
-      // If fixtureData contains availability, set it; else fallback to empty
-  // No availability array returned; fetch separately if needed
-  // For now, leave as empty; can be extended if needed
-  setAvailabilityList([]);
+      setPlayers(playersList);
+      setAvailabilityList(availabilityData);
     } catch (error) {
       console.error('Failed to load fixture details:', error);
     } finally {
@@ -61,7 +64,22 @@ export default function FixtureAvailabilityDetailPage() {
         <Button onClick={() => navigate(-1)} alignSelf="flex-start" colorScheme="blue" variant="outline" size="sm">Back</Button>
         <Card>
           <CardHeader>
-            <Heading size="md">Fixture Details</Heading>
+            <HStack justify="space-between">
+              <Heading size="md">Fixture Details</Heading>
+              {fixture && (
+                <HStack spacing={2}>
+                  <SendWhatsAppPollButton 
+                    fixture={fixture}
+                    players={players}
+                    onSendComplete={() => loadFixtureDetails()}
+                  />
+                  <SendReminderButton 
+                    fixture={fixture}
+                    onSendComplete={() => loadFixtureDetails()}
+                  />
+                </HStack>
+              )}
+            </HStack>
           </CardHeader>
           <CardBody>
             {loading ? (

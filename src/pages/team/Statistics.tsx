@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Box, Heading, Text, Table, Thead, Tbody, Tr, Th, Td, 
-         VStack, Tabs, TabList, Tab, TabPanels, TabPanel } from "@chakra-ui/react";
+         VStack, Tabs, TabList, Tab, TabPanels, TabPanel, Select, HStack } from "@chakra-ui/react";
 import { supabase } from "../../lib/supabaseClient";
 
 
@@ -54,6 +54,13 @@ export default function TeamStatistics() {
   const [bowlingStats, setBowlingStats] = useState<BowlingStats[]>([]);
   const [fieldingStats, setFieldingStats] = useState<FieldingStats[]>([]);
   const [loading, setLoading] = useState(true);
+  const [selectedSeason, setSelectedSeason] = useState(new Date().getFullYear().toString());
+
+  // Generate season options (current year and 4 years back)
+  const seasonOptions = Array.from({ length: 5 }, (_, i) => {
+    const year = new Date().getFullYear() - i;
+    return year.toString();
+  });
 
   useEffect(() => {
     async function fetchStatistics() {
@@ -61,21 +68,24 @@ export default function TeamStatistics() {
         // Batting
         const { data: battingData, error: battingError } = await supabase
           .from('player_statistics')
-          .select('player_id, player_name, games, inns, not_outs, runs, high_score, high_score_not_out, avg, fifties, hundreds, strike_rate')
+          .select('player_id, player_name, games, inns, not_outs, runs, high_score, high_score_not_out, avg, fifties, hundreds, strike_rate, season')
+          .eq('season', selectedSeason)
           .order('runs', { ascending: false });
         if (battingError) throw battingError;
 
         // Bowling
         const { data: bowlingData, error: bowlingError } = await supabase
           .from('player_statistics')
-          .select('player_id, player_name, games, overs, maidens, bowling_runs, wickets, best_bowling, five_wicket_haul, economy_rate, bowling_strike_rate, bowling_average')
+          .select('player_id, player_name, games, overs, maidens, bowling_runs, wickets, best_bowling, five_wicket_haul, economy_rate, bowling_strike_rate, bowling_average, season')
+          .eq('season', selectedSeason)
           .order('wickets', { ascending: false });
         if (bowlingError) throw bowlingError;
 
         // Fielding
         const { data: fieldingData, error: fieldingError } = await supabase
           .from('player_statistics')
-          .select('player_id, player_name, games, wk_catches, stumpings, total_wk_wickets, fielding_catches, run_outs, total_fielding_wickets, total_catches, total_victims')
+          .select('player_id, player_name, games, wk_catches, stumpings, total_wk_wickets, fielding_catches, run_outs, total_fielding_wickets, total_catches, total_victims, season')
+          .eq('season', selectedSeason)
           .order('total_victims', { ascending: false });
         if (fieldingError) throw fieldingError;
 
@@ -90,13 +100,25 @@ export default function TeamStatistics() {
       }
     }
     fetchStatistics();
-  }, []);
+  }, [selectedSeason]);
 
   return (
     <VStack spacing={8} align="stretch">
       <Box textAlign="center">
-        <Heading size="xl" mb={2} color="green.600">Team Statistics</Heading>
-        <Text color="gray.600">Performance statistics for Northolt Manor Cricket Club</Text>
+        <Heading size="xl" mb={4} color="green.600">Team Statistics</Heading>
+        <Text color="gray.600" mb={4}>Performance statistics for Northolt Manor Cricket Club</Text>
+        <HStack justify="center" spacing={4}>
+          <Text fontWeight="medium">Season:</Text>
+          <Select 
+            value={selectedSeason} 
+            onChange={(e) => setSelectedSeason(e.target.value)}
+            w="150px"
+          >
+            {seasonOptions.map(season => (
+              <option key={season} value={season}>{season}</option>
+            ))}
+          </Select>
+        </HStack>
       </Box>
 
       {loading ? (
