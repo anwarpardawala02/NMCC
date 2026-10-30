@@ -68,15 +68,18 @@ export default function FixtureAvailabilityDetailPage() {
               <Heading size="md">Fixture Details</Heading>
               {fixture && (
                 <HStack spacing={2}>
-                  <SendWhatsAppPollButton 
-                    fixture={fixture}
-                    players={players}
-                    onSendComplete={() => loadFixtureDetails()}
-                  />
-                  <SendReminderButton 
-                    fixture={fixture}
-                    onSendComplete={() => loadFixtureDetails()}
-                  />
+                  {availabilityList.length === 0 ? (
+                    <SendWhatsAppPollButton 
+                      fixture={fixture}
+                      players={players}
+                      onSendComplete={() => loadFixtureDetails()}
+                    />
+                  ) : (
+                    <SendReminderButton 
+                      fixture={fixture}
+                      onSendComplete={() => loadFixtureDetails()}
+                    />
+                  )}
                 </HStack>
               )}
             </HStack>

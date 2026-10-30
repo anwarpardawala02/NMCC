@@ -5,7 +5,6 @@ import { useAuth } from "../hooks/useAuth";
 
 // Pages
 import Home from "../pages/Home";
-import Register from "../pages/Register";
 import ClubMediaHub from "../pages/Gallery";
 import BlogPost from "../pages/BlogPost";
 import Sponsors from "../pages/Sponsors";
@@ -36,7 +35,6 @@ export default function Layout() {
 
   const navItems = [
     { label: 'Home', path: '/' },
-    { label: 'Register', path: '/register' },
     { label: 'Squad Room', path: '/team' },
     { label: 'Club Media Hub', path: '/gallery' },
     { label: 'Sponsors', path: '/sponsors' },
@@ -170,7 +168,6 @@ export default function Layout() {
             <Route path="/team/statistics" element={<TeamStatistics />} />
             <Route index element={<TeamSquad />} />
           </Route>
-          <Route path="/register" element={<Register />} />
           <Route path="/gallery" element={<ClubMediaHub />} />
           <Route path="/gallery/blog" element={<ClubMediaHub />} />
           <Route path="/blog/:id" element={<BlogPost />} />

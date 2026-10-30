@@ -7,7 +7,7 @@ import {
   Text,
   Link,
   VStack,
-  Container,
+  Button,
   Badge
 } from "@chakra-ui/react";
 import { ExternalLinkIcon } from "@chakra-ui/icons";
@@ -44,9 +44,9 @@ export default function Sponsors() {
   }
 
   return (
-    <Container maxW="container.xl" py={8}>
-      <VStack spacing={8} align="stretch">
-        <Box textAlign="center">
+    <Box h="calc(100vh - 80px)" display="flex" flexDirection="column" overflow="hidden">
+      <VStack spacing={12} align="center" justify="center" w="full" flex={1}>
+        <Box textAlign="center" maxW="900px" w="full">
           <Heading size="xl" mb={4} color="green.600">
             Our Sponsors
           </Heading>
@@ -54,13 +54,6 @@ export default function Sponsors() {
             We're grateful for the support of our wonderful sponsors who help make our club possible
           </Text>
         </Box>
-
-        {/* Demo sponsor logos */}
-        <SimpleGrid columns={[1, 2, 3]} spacing={8} mb={4} justifyItems="center">
-          <Image src="/medium_Printwell_Logo.png" alt="Printwell Logo" maxH="60px" objectFit="contain" />
-          <Image src="/medium_Saifee_Silictors_Logo.png" alt="Saifee Solicitors Logo" maxH="60px" objectFit="contain" />
-          <Image src="/medium_Who_is_Hussain_-_Logo_-_Colour.png" alt="Who is Hussain Logo" maxH="60px" objectFit="contain" />
-        </SimpleGrid>
 
         {sponsors.length === 0 ? (
           <Box textAlign="center" py={12}>
@@ -72,85 +65,75 @@ export default function Sponsors() {
             </Text>
           </Box>
         ) : (
-          <SimpleGrid columns={[1, 2, 3, 4]} spacing={8}>
+          <SimpleGrid columns={[1, 2, 3]} spacing={8} w="full" maxW="900px" placeItems="center" mx="auto" justifyItems="center">
             {sponsors.map((sponsor) => (
-              <Box 
+              <VStack
                 key={sponsor.id}
-                p={6}
-                borderWidth={2}
-                borderRadius="lg"
-                bg="white"
-                textAlign="center"
-                _hover={{ shadow: 'lg', transform: 'translateY(-2px)' }}
-                transition="all 0.2s"
-                borderColor={`${tierColors[sponsor.tier]}.200`}
+                spacing={2}
+                align="center"
+                justify="center"
               >
-                <VStack spacing={4}>
-                  <Badge 
-                    colorScheme={tierColors[sponsor.tier]} 
-                    size="lg"
-                    textTransform="capitalize"
+                {sponsor.logo_url ? (
+                  <Link 
+                    href={sponsor.website_url || '#'}
+                    isExternal={!!sponsor.website_url}
+                    _hover={{ opacity: 0.8 }}
+                    transition="opacity 0.2s"
                   >
-                    {sponsor.tier} Sponsor
-                  </Badge>
-                  
-                  {sponsor.logo_url ? (
                     <Image 
                       src={sponsor.logo_url} 
                       alt={`${sponsor.name} logo`}
                       maxH="100px"
-                      maxW="200px"
+                      maxW="180px"
                       objectFit="contain"
                     />
-                  ) : (
-                    <Box 
-                      h="100px" 
-                      w="200px" 
-                      bg="gray.100" 
-                      borderRadius="md"
-                      display="flex"
-                      alignItems="center"
-                      justifyContent="center"
-                    >
-                      <Text color="gray.500" fontSize="sm">No Logo</Text>
-                    </Box>
-                  )}
-                  
-                  <Heading size="md">{sponsor.name}</Heading>
-                  
-                  {sponsor.description && (
-                    <Text color="gray.600" fontSize="sm" noOfLines={3}>
-                      {sponsor.description}
-                    </Text>
-                  )}
-                  
-                  {sponsor.website_url && (
-                    <Link 
-                      href={sponsor.website_url} 
-                      isExternal
-                      color="green.600"
-                      fontWeight="medium"
-                      _hover={{ textDecoration: 'underline' }}
-                    >
-                      Visit Website <ExternalLinkIcon boxSize={4} style={{ display: 'inline', marginLeft: '4px' }} />
-                    </Link>
-                  )}
-                </VStack>
-              </Box>
+                  </Link>
+                ) : (
+                  <Box 
+                    h="100px" 
+                    w="180px" 
+                    bg="gray.100" 
+                    borderRadius="md"
+                    display="flex"
+                    alignItems="center"
+                    justifyContent="center"
+                  >
+                    <Text color="gray.500" fontSize="sm" textAlign="center">{sponsor.name}</Text>
+                  </Box>
+                )}
+              </VStack>
             ))}
           </SimpleGrid>
         )}
-
-        <Box p={6} bg="green.50" borderRadius="lg" textAlign="center">
-          <Heading size="md" mb={2} color="green.800">
-            Interested in Sponsoring Us?
-          </Heading>
-          <Text color="green.700">
-            We offer various sponsorship packages to suit different budgets. 
-            Contact us to learn more about how you can support Northolt Manor Cricket Club.
-          </Text>
-        </Box>
       </VStack>
-    </Container>
+
+      <Box 
+        p={8} 
+        borderRadius="md" 
+        textAlign="center" 
+        maxW="500px" 
+        mx="auto" 
+        mt="auto" 
+        w="full"
+        bg="gray.50"
+      >
+        <Heading size="md" mb={4} color="gray.700" fontWeight="semibold">
+          Interested in Sponsoring?
+        </Heading>
+        <Button 
+          as="a" 
+          href="mailto:northoltmanorcc@gmail.com"
+          variant="outline"
+          colorScheme="gray"
+          size="md"
+          _hover={{ 
+            textDecoration: 'none',
+            bg: 'gray.100'
+          }}
+        >
+          Get in Touch
+        </Button>
+      </Box>
+    </Box>
   );
 }

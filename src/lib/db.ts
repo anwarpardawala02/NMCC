@@ -357,7 +357,6 @@ export async function listSponsors(): Promise<Sponsor[]> {
   const { data, error }: any = await supabase
     .from('sponsors')
     .select('*')
-    .eq('active', true)
     .order('tier', { ascending: true });
   if (error) {
     if (error.code === 'PGRST205' || error.code === '42P01') return [] as Sponsor[];
@@ -420,6 +419,21 @@ export async function updateFixture(id: string, updates: Partial<Fixture>): Prom
 }
 
 export async function deleteFixture(id: string): Promise<void> {
+  // Delete associated club_fees (all match fees for this fixture)
+  const { error: feesError } = await supabase
+    .from('club_fees')
+    .delete()
+    .eq('fixture_id', id);
+  if (feesError) throw feesError;
+
+  // Delete associated availability records
+  const { error: availError } = await supabase
+    .from('availability')
+    .delete()
+    .eq('fixture_id', id);
+  if (availError) throw availError;
+
+  // Finally, delete the fixture itself
   const { error } = await supabase
     .from('fixtures')
     .delete()
